@@ -13,21 +13,21 @@ namespace fs = std::filesystem;
 
 //std::string PATH = "../../img_color/IMG_";
 
-//std::string MODE = "IMAGE";
-std::string MODE = "VIDEO";
+std::string MODE = "IMAGE";
+//std::string MODE = "VIDEO";
 std::string PATH = "../../Experiment1/Image_";
-std::string PATH_IMAGE_TEST = "../../Experiment1/Image_31.bmp";
+std::string PATH_IMAGE_TEST = "../../Experiment1/Image_1.bmp";
 std::string PATH_VIDEO = "../../videos/video_3.MOV";
 std::string PATH_CYLINDER = "../../cylinder.txt";
-int COUNT_FILER_IMG = 20;
+int COUNT_FILER_IMG = 59;
 
 int main(int argc, char const* argv[]) {
 
 //     Color Filter
     ColorFilter colorFilter1;
-//    Cylinder cylinder = colorFilter1.train(PATH, COUNT_FILER_IMG);
-//    cylinder.save(PATH_CYLINDER);
-    Cylinder cylinder;
+    Cylinder cylinder = colorFilter1.train(PATH, COUNT_FILER_IMG);
+    cylinder.save(PATH_CYLINDER);
+//    Cylinder cylinder;
     cylinder.load(PATH_CYLINDER);
     ColorFilter colorFilter(cylinder);
 

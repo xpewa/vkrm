@@ -5,13 +5,12 @@
 
 #include "colorFilter.h"
 
-
+std::string PATH = "../../Experiment1/Image_";
 std::string PATH_CYLINDER = "../cylinder.txt";
 
-std::string PATH_TEST_IMG_1 = "../image1.jpg";
-std::string PATH_REAL_IMG_1 = "../image1.jpg";
+std::string PATH_TEST_IMG = "../../Experiment1/Image_";
 
-int COUNT_FILER_IMG = 20;
+int COUNT_FILER_IMG = 59;
 
 
 int hammingDistance(const cv::Mat& mask1, const cv::Mat& mask2) {
@@ -52,7 +51,6 @@ double compareMasks(const cv::Mat& mask1, const cv::Mat& mask2) {
             }
         }
     }
-
     return static_cast<double>(matchingPixels) / totalPixels; // Процент совпадений
 }
 
@@ -66,32 +64,40 @@ void testColorFilter() {
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(COUNT_FILER_IMG);
+        cylinder = colorFilter.train(PATH, COUNT_FILER_IMG);
         cylinder.save(PATH_CYLINDER);
     }
     std::cout << "cylinder R: " << cylinder.R << std::endl;
 
     // Тест 1: Пустое изображение
-    cv::Mat emptyImage(500, 500, CV_8U, cv::Scalar(0));
-    cv::Mat resultEmpty = colorFilter.recognize(emptyImage);
+//    cv::Mat emptyImage(500, 500, CV_8U, cv::Scalar(0));
+//    cv::Mat resultEmpty = colorFilter.recognize(emptyImage);
 //    cv::imshow("img new", resultEmpty);
 //    cv::waitKey(0);
 //    assert(resultEmpty.empty());
 
-
-    cv::Mat img_test_1 = cv::imread(PATH_TEST_IMG_1);
-    cv::Mat img_real_1 = cv::imread(PATH_REAL_IMG_1);
-    cv::Mat img_res_1 = colorFilter.recognize(img_test_1);
-
+    int mean_distance = 0;
+    double mean_similarity_matchTemplate = 0;
+    double mean_similarity = 0;
     try {
-        int distance = hammingDistance(img_res_1, img_real_1);
-        std::cout << "Hamming Distance: " << distance << std::endl;
+        for (int i = 1; i < COUNT_FILER_IMG + 1; ++i) {
+            cv::Mat img_test = cv::imread(PATH_TEST_IMG + std::to_string(i) + ".bmp");
+            cv::Mat img_real = cv::imread(PATH_TEST_IMG + std::to_string(i) + ".png",cv::IMREAD_GRAYSCALE);
+            cv::Mat img_res = colorFilter.recognize(img_test);
 
-        double similarity_matchTemplate = compareMasksWithMatchTemplate(img_res_1, img_real_1);
-        std::cout << "Similarity (matchTemplate): " << similarity_matchTemplate * 100 << "%" << std::endl;
+            mean_distance += hammingDistance(img_res, img_real);
+            mean_similarity_matchTemplate += compareMasksWithMatchTemplate(img_res, img_real);
+            mean_similarity += compareMasks(img_res, img_real);
+        }
+        mean_distance /= COUNT_FILER_IMG;
+        mean_similarity_matchTemplate /= COUNT_FILER_IMG;
+        mean_similarity /= COUNT_FILER_IMG;
 
-        double similarity = compareMasks(img_res_1, img_real_1);
-        std::cout << "Similarity: " << similarity * 100 << "%" << std::endl;
+        std::cout << "Mean Hamming Distance: " << mean_distance << std::endl;
+
+        std::cout << "Mean Similarity (matchTemplate): " << mean_similarity_matchTemplate * 100 << "%" << std::endl;
+
+        std::cout << "Mean Similarity: " << mean_similarity * 100 << "%" << std::endl;
     } catch (const std::runtime_error& error) {
         std::cerr << "Error: " << error.what() << std::endl;
     }
