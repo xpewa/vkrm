@@ -6,11 +6,7 @@
 #include "colorFilter.h"
 
 std::string PATH = "../../Experiment1/Image_";
-std::string PATH_CYLINDER = "../cylinder.txt";
-
-std::string PATH_TEST_IMG = "../../Experiment1/Image_";
-
-int COUNT_FILER_IMG = 59;
+std::string PATH_CYLINDER = "../../cylinder.txt";
 
 
 int hammingDistance(const cv::Mat& mask1, const cv::Mat& mask2) {
@@ -55,7 +51,7 @@ double compareMasks(const cv::Mat& mask1, const cv::Mat& mask2) {
 }
 
 
-void testColorFilter() {
+void testColorFilter(std::string path_test_img, std::string path_mask_img, std::string type_img, int count_img) {
     ColorFilter colorFilter;
     Cylinder cylinder;
 
@@ -64,34 +60,26 @@ void testColorFilter() {
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(PATH, COUNT_FILER_IMG);
+        cylinder = colorFilter.train(PATH, count_img);
         cylinder.save(PATH_CYLINDER);
     }
-    std::cout << "cylinder R: " << cylinder.R << std::endl;
-
-    // Тест 1: Пустое изображение
-//    cv::Mat emptyImage(500, 500, CV_8U, cv::Scalar(0));
-//    cv::Mat resultEmpty = colorFilter.recognize(emptyImage);
-//    cv::imshow("img new", resultEmpty);
-//    cv::waitKey(0);
-//    assert(resultEmpty.empty());
 
     int mean_distance = 0;
     double mean_similarity_matchTemplate = 0;
     double mean_similarity = 0;
     try {
-        for (int i = 1; i < COUNT_FILER_IMG + 1; ++i) {
-            cv::Mat img_test = cv::imread(PATH_TEST_IMG + std::to_string(i) + ".bmp");
-            cv::Mat img_real = cv::imread(PATH_TEST_IMG + std::to_string(i) + ".png",cv::IMREAD_GRAYSCALE);
+        for (int i = 1; i < count_img + 1; ++i) {
+            cv::Mat img_test = cv::imread(path_test_img + std::to_string(i) + type_img);
+            cv::Mat img_real = cv::imread(path_mask_img + std::to_string(i) + ".png",cv::IMREAD_GRAYSCALE);
             cv::Mat img_res = colorFilter.recognize(img_test);
 
             mean_distance += hammingDistance(img_res, img_real);
             mean_similarity_matchTemplate += compareMasksWithMatchTemplate(img_res, img_real);
             mean_similarity += compareMasks(img_res, img_real);
         }
-        mean_distance /= COUNT_FILER_IMG;
-        mean_similarity_matchTemplate /= COUNT_FILER_IMG;
-        mean_similarity /= COUNT_FILER_IMG;
+        mean_distance /= count_img;
+        mean_similarity_matchTemplate /= count_img;
+        mean_similarity /= count_img;
 
         std::cout << "Mean Hamming Distance: " << mean_distance << std::endl;
 
@@ -105,6 +93,18 @@ void testColorFilter() {
 
 
 int main() {
-    testColorFilter();
+    std::string path_test_img_experiment_1 = "../../Experiment1/Image_";
+    std::string path_mask_img_experiment_1 = "../../Experiment1/Image_";
+    std::string type_img_experiment_1 = ".bmp";
+    int count_img_experiment_1 = 59;
+
+    std::string path_test_img_experiment_1_video_3 = "../../Experiment1/video3/Image_";
+    std::string path_mask_img_experiment_1_video_3 = "../../Experiment1/video3_mask/Image_";
+    std::string type_img_experiment_1_video_3 = ".tiff";
+    int count_img_experiment_1_video_3 = 53;
+
+//    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
+    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
+
     return 0;
 }

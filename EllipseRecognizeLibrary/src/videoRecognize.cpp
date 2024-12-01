@@ -4,10 +4,10 @@
 //    return cv::Mat();
 //}
 
-void VideoRecognize::recognize_ellipse_in_video() {
+void VideoRecognize::recognize_ellipse_in_video(std::string path_out_video) {
     int frame_width = this->cap.get(cv::CAP_PROP_FRAME_WIDTH);
     int frame_height = this->cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-    this->video = cv::VideoWriter("../../videos/outVideo.mp4", cv::VideoWriter::fourcc('m','p','4','v'), 30, cv::Size(frame_width,frame_height));
+    this->video = cv::VideoWriter(path_out_video, cv::VideoWriter::fourcc('m','p','4','v'), 30, cv::Size(frame_width,frame_height));
 
     while (true) {
         cv::Mat frame;
@@ -20,7 +20,7 @@ void VideoRecognize::recognize_ellipse_in_video() {
         EdgeDetection edgeDetection;
         std::vector<Point> imagePoints = edgeDetection.find_points(img_new);
         cv::Mat emptyImg = cv::Mat::zeros(cv::Size(img_new.cols, img_new.rows),CV_8UC1);
-        emptyImg = edgeDetection.draw_points(emptyImg, imagePoints);
+//        emptyImg = edgeDetection.draw_points(emptyImg, imagePoints);
 //        cv::imshow("edgeDetection", emptyImg);
 //        cv::waitKey(0);
 

@@ -29,6 +29,9 @@ Ellipse DetectEllipse::__mnk(std::vector<Point> const& pts) {
 }
 
 Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 2
+    Ellipse ellipse;
+    if (pts.empty()) return ellipse;
+
     int maxSize = 0;
     int countPointInRange = 100;
     for (int i = 0; i < pts.size(); ++i) {
@@ -43,7 +46,7 @@ Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 
     int count_pts = pts.size();
     cv::Mat center = cv::Mat::zeros(maxSize + 10, maxSize + 10, CV_8U); // img size
 
-    int maxIterations = 100;
+    int maxIterations = 10000;
     for (int i = 0; i < maxIterations; ++i) {
         std::vector<int> index(countPointInRange);
         for (int i = 0; i < countPointInRange; ++i) {
@@ -74,7 +77,7 @@ Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 
     cv::Point minLoc;
     cv::Point maxLoc;
     minMaxLoc(center, &minVal, &maxVal, &minLoc, &maxLoc);
-    Ellipse ellipse;
+
     ellipse.x = maxLoc.x;
     ellipse.y = maxLoc.y;
 

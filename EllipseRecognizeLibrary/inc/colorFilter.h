@@ -29,7 +29,7 @@ public:
     }
 
     bool load(const std::string& filename) {
-        std::cout << "I`m loading Cylinder" << std::endl;
+//        std::cout << "I`m loading Cylinder" << std::endl;
         std::ifstream file(filename, std::ios::binary);
         if (!file.is_open()) return false;
 

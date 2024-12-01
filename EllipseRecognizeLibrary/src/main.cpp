@@ -13,23 +13,29 @@ namespace fs = std::filesystem;
 
 //std::string PATH = "../../img_color/IMG_";
 
-std::string MODE = "IMAGE";
-//std::string MODE = "VIDEO";
+//std::string MODE = "IMAGE";
+std::string MODE = "VIDEO";
 std::string PATH = "../../Experiment1/Image_";
-std::string PATH_IMAGE_TEST = "../../Experiment1/Image_1.bmp";
-std::string PATH_VIDEO = "../../videos/video_3.MOV";
+//std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_19.tiff"; // без мяча
+//std::string PATH_IMAGE_TEST = "../../Experiment1/Image_39.bmp";
+std::string PATH_IMAGE_TEST = "../../Experiment1/video3/Image_24.tiff";
+//std::string PATH_VIDEO = "../../videos/video_3.MOV";
+std::string PATH_VIDEO = "../../Experiment1/video3_1/video_3_1.mp4";
+//std::string PATH_OUT_VIDEO = "../../videos/outVideo.mp4";
+std::string PATH_OUT_VIDEO = "../../Experiment1/video3_1/out_video_3_1.mp4";
 std::string PATH_CYLINDER = "../../cylinder.txt";
 int COUNT_FILER_IMG = 59;
 
 int main(int argc, char const* argv[]) {
 
 //     Color Filter
-    ColorFilter colorFilter1;
-    Cylinder cylinder = colorFilter1.train(PATH, COUNT_FILER_IMG);
-    cylinder.save(PATH_CYLINDER);
-//    Cylinder cylinder;
+//    ColorFilter colorFilter1;
+//    Cylinder cylinder = colorFilter1.train(PATH, COUNT_FILER_IMG);
+//    cylinder.save(PATH_CYLINDER);
+    Cylinder cylinder;
     cylinder.load(PATH_CYLINDER);
     ColorFilter colorFilter(cylinder);
+    std::cout << "Cylinder R = " << cylinder.R << std::endl;
 
     if (MODE == "IMAGE") {
         cv::Mat img = cv::imread(PATH_IMAGE_TEST);
@@ -84,7 +90,7 @@ int main(int argc, char const* argv[]) {
             return -1;
         }
         VideoRecognize videoRecognize = VideoRecognize(colorFilter, cap);
-        videoRecognize.recognize_ellipse_in_video();
+        videoRecognize.recognize_ellipse_in_video(PATH_OUT_VIDEO);
     }
 
     return 0;

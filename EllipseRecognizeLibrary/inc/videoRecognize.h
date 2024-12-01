@@ -18,7 +18,7 @@ public:
     VideoRecognize(ColorFilter& colorFilter, cv::VideoCapture cap) : cap(cap), colorFilter(colorFilter) {}
     ~VideoRecognize() { cap.release(); }
 
-    void recognize_ellipse_in_video();
+    void recognize_ellipse_in_video(std::string path_out_video="../../videos/outVideo.mp4");
 };
 
 #endif //VKRM_VIDEORECOGNIZE_H

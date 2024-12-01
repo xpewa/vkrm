@@ -31,8 +31,9 @@ struct Contour {
 class EdgeDetection {
 public:
     std::vector<Contour> __findContours(cv::Mat const & image);
-    Contour __filterSize(std::vector<Contour> & contours);
-    Contour __filterCircularity(std::vector<Contour> & contours);
+    Contour __filterMaxContour(std::vector<Contour> & objects);
+    std::vector<Contour> __filterSize(std::vector<Contour> & objects);
+    std::vector<Contour> __filterCircularity(std::vector<Contour> & objects);
     cv::Mat __GaussianBlur(cv::Mat const & img);
     std::vector<Point> __PrevittOperator(cv::Mat const & img);
     cv::Mat __fillBlank(cv::Mat const & img);

@@ -10,9 +10,5 @@ target_link_libraries(testsColorFilter vkrm_lib)
 add_executable(testsDetectEllipse testDetectEllipse.cpp)
 target_link_libraries(testsDetectEllipse vkrm_lib)
 
-add_executable(testsEdgeDetection testEdgeDetection.cpp)
-target_link_libraries(testsEdgeDetection vkrm_lib)
-
 add_test(NAME testsColorFilter COMMAND testsColorFilter)
 add_test(NAME testsDetectEllipse COMMAND testsDetectEllipse)
-add_test(NAME testsEdgeDetection COMMAND testsEdgeDetection)

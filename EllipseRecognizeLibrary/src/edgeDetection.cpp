@@ -1,5 +1,10 @@
 #include "edgeDetection.h"
 
+
+int MIN_SIZE_OBJECT = 100;
+int MAX_SIZE_OBJECT = 1000000;
+
+
 cv::Mat EdgeDetection::__GaussianBlur(cv::Mat const & img) {
     cv::Mat res(cv::Size(img.cols, img.rows), CV_8UC1, 255);
     for (int y = 1; y < img.rows - 1; ++y) {
@@ -135,7 +140,7 @@ std::vector<Point> EdgeDetection::find_points(cv::Mat const & src) {
 //        img = __GaussianBlur(img);
 //    }
 
-    std::vector<Contour> contours1 = __findContours(img);
+    std::vector<Contour> contours = __findContours(img);
 //    std::cout << "Count contours1 = " << contours1.size() << std::endl;
 
 //    img = __fillBlank(img);
@@ -145,15 +150,39 @@ std::vector<Point> EdgeDetection::find_points(cv::Mat const & src) {
 //    std::vector<Contour> contours2 = __findContours(img);
 //    std::cout << "Count contours2 = " << contours2.size() << std::endl;
 
-    cv::Mat new_img = src.clone();
-    for (int y = 0; y < new_img.rows; ++y) {
-        for (int x = 0; x < new_img.cols; ++x) {
-            new_img.at<uchar>(y, x) = 0;
-        }
-    }
-    Contour max_contour = __filterSize(contours1);
-    img = draw_points(new_img, max_contour.pixels);
+//    cv::Mat new_img = cv::Mat::zeros(cv::Size(img.cols, img.rows),CV_8UC1);
+//    img = draw_points(new_img, contours[0].pixels);
+//    for (Contour& countor : contours) {
+//        img = draw_points(img, countor.pixels);
+//    }
+//    cv::imshow("__findContours initial", img);
+//    cv::waitKey(0);
 
+
+    contours = __filterSize(contours);
+
+//    new_img = cv::Mat::zeros(cv::Size(img.cols, img.rows),CV_8UC1);
+//    img = draw_points(new_img, contours[0].pixels);
+//    for (Contour& countor : contours) {
+//        img = draw_points(img, countor.pixels);
+//    }
+//    cv::imshow("__filterSize", img);
+//    cv::waitKey(0);
+
+    contours = __filterCircularity(contours);
+
+//    new_img = cv::Mat::zeros(cv::Size(img.cols, img.rows),CV_8UC1);
+//    img = draw_points(new_img, contours[0].pixels);
+//    for (Contour& countor : contours) {
+//        img = draw_points(img, countor.pixels);
+//    }
+//    cv::imshow("__filterCircularity", img);
+//    cv::waitKey(0);
+
+    Contour max_contour = __filterMaxContour(contours);
+
+    cv::Mat clear_img = cv::Mat::zeros(cv::Size(img.cols, img.rows),CV_8UC1);
+    img = draw_points(clear_img, max_contour.pixels);
 //    cv::imshow("max_contour", img);
 //    cv::waitKey(0);
 
@@ -163,12 +192,6 @@ std::vector<Point> EdgeDetection::find_points(cv::Mat const & src) {
 }
 
 cv::Mat EdgeDetection::draw_points(cv::Mat const & img, std::vector<Point> const & points) {
-    uint count_points = 0;
-    for (int i = 0; i < points.size(); ++i) {
-        ++count_points;
-    }
-//    std::cout << "Count points: " << count_points << std::endl;
-
     cv::Mat res = img.clone();
     for (int i = 0; i < points.size(); ++i) {
         Point p = points[i];
@@ -224,20 +247,69 @@ std::vector<Contour> EdgeDetection::__findContours(cv::Mat const & image) {
 }
 
 
-Contour EdgeDetection::__filterSize(std::vector<Contour> & contours) {
+Contour EdgeDetection::__filterMaxContour(std::vector<Contour> & objects) {
+    if (objects.size() == 0) {
+        Contour contour;
+        return contour;
+    }
     uint max_size = 0;
     int max_size_i = 0;
-    for (int i = 0; i < contours.size(); ++i) {
-        if (contours[i].pixels.size() > max_size) {
-            max_size = contours[i].pixels.size();
+    for (int i = 0; i < objects.size(); ++i) {
+        if (objects[i].pixels.size() > max_size) {
+            max_size = objects[i].pixels.size();
             max_size_i = i;
         }
     }
 //    std::cout << "max_size contours = " << max_size << std::endl;
-    return contours[max_size_i];
+    return objects[max_size_i];
 }
 
 
-Contour EdgeDetection::__filterCircularity(std::vector<Contour> & contours) {
+std::vector<Contour> EdgeDetection::__filterSize(std::vector<Contour> & objects) {
+    if (objects.size() == 0) return objects;
 
+    std::vector<Contour> filteredContours;
+
+    for (Contour& object : objects) {
+        double area = 0;
+        for (Point& point : object.pixels) {
+            area += 1;
+        }
+        if (area > MIN_SIZE_OBJECT and area < MAX_SIZE_OBJECT) {
+            filteredContours.push_back(object);
+        }
+    }
+
+    return filteredContours;
+}
+
+
+// Анализ отношения главных осей
+std::vector<Contour> EdgeDetection::__filterCircularity(std::vector<Contour> & objects) {
+    if (objects.size() == 0) return objects;
+
+    int maxRatio = 2;
+    std::vector<Contour> filteredContours;
+
+    for (Contour& object : objects) {
+        int min_x = 1000000000;
+        int min_y = 1000000000;
+        int max_x = 0;
+        int max_y = 0;
+        for (Point& point : object.pixels) {
+            if (point.x < min_x) min_x = point.x;
+            if (point.y < min_y) min_y = point.y;
+            if (point.x > max_x) max_x = point.x;
+            if (point.y > max_y) max_y = point.y;
+        }
+        int dx = max_x - min_x;
+        int dy = max_y - min_y;
+        if (dx == 0 || dy == 0) continue;
+        double circularity = std::max(dx, dy) / std::min(dx, dy);
+        if (circularity < maxRatio) {
+            filteredContours.push_back(object);
+        }
+    }
+
+    return filteredContours;
 }
