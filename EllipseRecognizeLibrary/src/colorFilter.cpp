@@ -17,6 +17,21 @@ cv::Mat ColorFilter::__getArrayFromData(cv::Mat const& img, cv::Mat const& mask)
     return result;
 }
 
+cv::Mat ColorFilter::__getArrayFromDataWithoutMask(const cv::Mat& img) {
+    int Ny = img.rows;
+    int Nx = img.cols;
+    int totalPixels = Ny * Nx;
+    cv::Mat result = cv::Mat(totalPixels, 1, CV_8UC3);
+    for (int y = 0; y < Ny; y++) {
+        const cv::Vec3b* srcRowPtr = img.ptr<cv::Vec3b>(y);
+        cv::Vec3f* destRowPtr = result.ptr<cv::Vec3f>(y * Nx);
+        memcpy(destRowPtr, srcRowPtr, Nx * 3);
+    }
+    result = result.reshape(1);
+    result.convertTo(result, CV_32F);
+    return result;
+}
+
 Cylinder ColorFilter::train(std::string path, int countImg) {
     ColorFilter colorFilter;
     std::vector<cv::Mat> img(countImg + 1);
@@ -45,15 +60,17 @@ Cylinder ColorFilter::train(std::string path, int countImg) {
     return __getCylinder(data_train);
 }
 
-cv::Mat ColorFilter::recognize(cv::Mat const& img) {
+cv::Mat ColorFilter::recognize(cv::Mat const& img) { // img.type() == CV_8UC3
     int Ny = img.rows;
     int Nx = img.cols;
-    cv::Mat mask_img(img.rows, img.cols, CV_8U, cv::Scalar(255));
-    cv::Mat p = __getArrayFromData(img, mask_img);
+    cv::Mat p = __getArrayFromDataWithoutMask(img);
 
-    cv::Mat mean = cv::Mat::ones(p.rows, 1, CV_32F) * cylinder.p0;
-    cv::Mat p_p0 = p - mean;
-    cv::Mat t = (p_p0) * cylinder.v.t();
+    cv::Mat mean;
+//    mean = cv::Mat::ones(p.rows, 1, CV_32F) * cylinder.p0;
+    cv::repeat(cylinder.p0, p.rows, 1, mean); // Долго (4 ms)
+
+    cv::Mat p_p0 = p - mean; // 2 ms
+    cv::Mat t = (p_p0) * cylinder.v.t(); // 2 ms
 
     cv::Mat dt = abs(t - (cylinder.t1 + cylinder.t2) / 2) - (cylinder.t2 - cylinder.t1) / 2;
     dt = cv::max(dt, 0);
@@ -63,6 +80,8 @@ cv::Mat ColorFilter::recognize(cv::Mat const& img) {
     sqrt(A.mul(A)*cv::Mat::ones(3, 1, CV_32F), dp);
 //    float R = dp.at<float>(round((dp.rows - 1) * 0.5), 0);
     dp = cv::max(dp - cylinder.R * cv::Mat::ones(dp.rows, 1, CV_32F), 0);
+
+    auto start = std::chrono::high_resolution_clock::now();
 
     cv::Mat d;
     d = dp + dt;
@@ -79,6 +98,12 @@ cv::Mat ColorFilter::recognize(cv::Mat const& img) {
             }
         }
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//    std::cout << "Время: " << duration.count() << " microseconds" << std::endl;
+
     return mask;
 }
 

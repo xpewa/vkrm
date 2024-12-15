@@ -4,11 +4,15 @@
 #include <fstream>
 #include <string>
 #include <numeric>
+#include <chrono>
+#include <vector>
+#include <numeric>
 
 
 #include "colorFilter.h"
 #include "edgeDetection.h"
 #include "detectEllipse.h"
+#include "findBall.h"
 
 
 std::string PATH = "../../Experiment1/Image_";
@@ -85,22 +89,49 @@ void testDetectEllipseExperiment(std::string path_ellipse_centers, std::string p
         cylinder = colorFilter.train(PATH, count_img);
         cylinder.save(PATH_CYLINDER);
     }
+    FindBall findBall(colorFilter);
+
+    std::vector<long long> times;
 
     for (int i = 1; i < count_img + 1; ++i) {
+
+//        auto start = std::chrono::high_resolution_clock::now();
+//
         cv::Mat img_test = cv::imread(path_test_img + std::to_string(i) + type_img);
+//
+//        cv::Mat img_res = colorFilter.recognize(img_test);
+//
+//        auto end = std::chrono::high_resolution_clock::now();
+//        auto start = std::chrono::high_resolution_clock::now();
+//
+//        EdgeDetection edgeDetection;
+//        std::vector<Point> imagePoints = edgeDetection.find_points(img_res);
+//
+//        auto end = std::chrono::high_resolution_clock::now();
+//        auto start = std::chrono::high_resolution_clock::now();
+//
+//        DetectEllipse detectEllipse;
+//        Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
 
-        cv::Mat img_res = colorFilter.recognize(img_test);
+//        auto end = std::chrono::high_resolution_clock::now();
 
-        EdgeDetection edgeDetection;
-        std::vector<Point> imagePoints = edgeDetection.find_points(img_res);
+        auto start = std::chrono::high_resolution_clock::now();
 
-        cv::Mat emptyImg = cv::Mat::zeros(cv::Size(img_res.cols, img_res.rows),CV_8UC1);
+        Ellipse ellipse = findBall.findBall(img_test);
 
-        DetectEllipse detectEllipse;
-        Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
+        auto end = std::chrono::high_resolution_clock::now();
 
         predict_centers.push_back(ellipse);
+
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        times.push_back(duration.count());
     }
+
+    double averageTime = accumulate(times.begin(), times.end(), 0.0) / times.size();
+    std::cout << "Среднее время обработки изображения: " << averageTime << " microseconds" << std::endl;
+//    for (int i = 0; i < times.size(); ++i) {
+//        std::cout << "times " << i << ": " << times[i] << std::endl;
+//    }
 
     calculateMetrics(real_centers, predict_centers);
 };

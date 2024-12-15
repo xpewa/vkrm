@@ -11,13 +11,16 @@ set( vkrm_source
         src/edgeDetection.cpp
         src/detectEllipse.cpp
         src/videoRecognize.cpp
+        src/findBall.cpp
 
         inc/colorFilter.h
         inc/contous.h
         inc/edgeDetection.h
         inc/edgeDetection.h
         inc/detectEllipse.h
-        inc/videoRecognize.h )
+        inc/videoRecognize.h
+        inc/findBall.h
+)
 
 add_executable(vkrm ${vkrm_source})
 target_link_libraries(vkrm ${OpenCV_LIBS})

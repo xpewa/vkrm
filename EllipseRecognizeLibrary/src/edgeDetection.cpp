@@ -2,7 +2,7 @@
 
 
 int MIN_SIZE_OBJECT = 100;
-int MAX_SIZE_OBJECT = 1000000;
+int MAX_SIZE_OBJECT = 100000000;
 
 
 cv::Mat EdgeDetection::__GaussianBlur(cv::Mat const & img) {
@@ -36,28 +36,43 @@ cv::Mat EdgeDetection::__GaussianBlur(cv::Mat const & img) {
 }
 
 std::vector<Point> EdgeDetection::__PrevittOperator(cv::Mat const & img) {
-    cv::Mat res(cv::Size(img.cols, img.rows), CV_8UC1, 255);
-    for (int y = 1; y < img.rows - 1; ++y) {
-        for (int x = 1; x < img.cols - 1; ++x) {
-            res.at<uchar>(y, x) = img.at<uchar>(y, x);
-        }
-    }
 
     std::vector<std::vector<int>> Gx(img.cols, std::vector<int>(img.rows, 0));
     std::vector<std::vector<int>> Gy(img.cols, std::vector<int>(img.rows, 0));
     std::vector<std::vector<int>> Hp(img.cols, std::vector<int>(img.rows, 0));
     std::vector<Point> points;
 
+//    for (int y = 1; y < img.rows - 1; ++y) {
+//        for (int x = 1; x < img.cols - 1; ++x) {
+//            int z1 = img.at<uchar>(y - 1, x - 1);
+//            int z2 = img.at<uchar>(y - 1, x);
+//            int z3 = img.at<uchar>(y - 1, x + 1);
+//            int z4 = img.at<uchar>(y, x - 1);
+//            int z6 = img.at<uchar>(y, x + 1);
+//            int z7 = img.at<uchar>(y + 1, x - 1);
+//            int z8 = img.at<uchar>(y + 1, x);
+//            int z9 = img.at<uchar>(y + 1, x + 1);
+//
+//            int gx = (z7 + z8 + z9) - (z1 + z2 + z3);
+//            int gy = (z3 + z6 + z9) - (z1 + z4 + z7);
+//            Gx[x][y] = gx;
+//            Gy[x][y] = gy;
+//        }
+//    }
+
     for (int y = 1; y < img.rows - 1; ++y) {
+        const unsigned char* row_prev = img.ptr<uchar>(y - 1);
+        const unsigned char* row_current = img.ptr<uchar>(y);
+        const unsigned char* row_next = img.ptr<uchar>(y + 1);
         for (int x = 1; x < img.cols - 1; ++x) {
-            int z1 = img.at<uchar>(y - 1, x - 1);
-            int z2 = img.at<uchar>(y - 1, x);
-            int z3 = img.at<uchar>(y - 1, x + 1);
-            int z4 = img.at<uchar>(y, x - 1);
-            int z6 = img.at<uchar>(y, x + 1);
-            int z7 = img.at<uchar>(y + 1, x - 1);
-            int z8 = img.at<uchar>(y + 1, x);
-            int z9 = img.at<uchar>(y + 1, x + 1);
+            const unsigned char z1 = row_prev[x - 1];
+            const unsigned char z2 = row_prev[x];
+            const unsigned char z3 = row_prev[x + 1];
+            const unsigned char z4 = row_current[x - 1];
+            const unsigned char z6 = row_current[x + 1];
+            const unsigned char z7 = row_next[x - 1];
+            const unsigned char z8 = row_next[x];
+            const unsigned char z9 = row_next[x + 1];
 
             int gx = (z7 + z8 + z9) - (z1 + z2 + z3);
             int gy = (z3 + z6 + z9) - (z1 + z4 + z7);
@@ -66,9 +81,14 @@ std::vector<Point> EdgeDetection::__PrevittOperator(cv::Mat const & img) {
         }
     }
 
-    for (int x = 10; x < Gx.size() - 10; ++x) {
-        for (int y = 10; y < Gx[0].size() - 10; ++y) {
-            float k = 0.2; // 0.2
+//    auto start = std::chrono::high_resolution_clock::now();
+
+    int rows = Gx.size();
+    int cols = Gx[0].size();
+    float k = 0.2; // 0.2
+
+    for (int x = 10; x < rows - 10; ++x) {
+        for (int y = 10; y < cols - 10; ++y) {
             int gp1 = 0;
             int gp2 = 0;
             int gp3 = 0;
@@ -87,8 +107,67 @@ std::vector<Point> EdgeDetection::__PrevittOperator(cv::Mat const & img) {
             Hp[x][y] = hp;
 
             if (hp > 10000000 || hp < -10000000) {
-                Point p = Point(x, y);
-                points.push_back(p);
+                points.emplace_back(x, y);
+            }
+        }
+    }
+
+//    auto end = std::chrono::high_resolution_clock::now();
+//
+//    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//    std::cout << "Время: " << duration.count() << " microseconds" << std::endl;
+
+    return points;
+}
+
+std::vector<Point> EdgeDetection::__PrevittOperatorOptimized(const cv::Mat& img) {
+    // Проверка на тип изображения
+    if (img.channels() != 1 || img.depth() != CV_8U) {
+        throw std::runtime_error("Image must be grayscale and 8-bit.");
+    }
+
+    cv::Mat Gx(img.size(), CV_32S, cv::Scalar(0));
+    cv::Mat Gy(img.size(), CV_32S, cv::Scalar(0));
+    cv::Mat Hp(img.size(), CV_32S, cv::Scalar(0));
+    cv::Mat kernelX = (cv::Mat_<int>(3, 3) << -1, 0, 1, -1, 0, 1, -1, 0, 1);
+    cv::Mat kernelY = (cv::Mat_<int>(3, 3) << 1, 1, 1, 0, 0, 0, -1, -1, -1);
+
+    // Используем cv::filter2D для более быстрой свертки
+    cv::filter2D(img, Gx, CV_8U, kernelX);
+    cv::filter2D(img, Gy, CV_8U, kernelY);
+
+    float k = 0.2f; // Используем float для повышения производительности
+    int rows = img.rows;
+    int cols = img.cols;
+
+    for (int y = 10; y < rows - 10; ++y) {
+        for (int x = 10; x < cols - 10; ++x) {
+            int gp1 = 0;
+            int gp2 = 0;
+            int gp3 = 0;
+
+            // Обращение к памяти оптимизировано
+            for (int i = -1; i <= 1; ++i) {
+                for (int j = -1; j <= 1; ++j) {
+                    int gx = Gx.at<int>(y + i, x + j);
+                    int gy = Gy.at<int>(y + i, x + j);
+                    gp1 += gx * gx;
+                    gp2 += gx * gy;
+                    gp3 += gy * gy;
+                }
+            }
+
+            int hp = (gp1 * gp3 - gp2 * gp2) - static_cast<int>(k * (gp1 + gp3) * (gp1 + gp3));
+            Hp.at<int>(y, x) = hp;
+        }
+    }
+
+
+    std::vector<Point> points;
+    for (int y = 10; y < rows - 10; ++y) {
+        for (int x = 10; x < cols - 10; ++x) {
+            if (Hp.at<int>(y, x) > 10000000 || Hp.at<int>(y, x) < -10000000) {
+                points.emplace_back(x, y); // emplace_back эффективнее, чем push_back
             }
         }
     }
@@ -133,6 +212,8 @@ cv::Mat EdgeDetection::__fillBlank(cv::Mat const & img) {
 }
 
 std::vector<Point> EdgeDetection::find_points(cv::Mat const & src) {
+    auto start = std::chrono::high_resolution_clock::now();
+
     cv::Mat img = src.clone();
 
 //    img = __GaussianBlur(img);
@@ -187,6 +268,11 @@ std::vector<Point> EdgeDetection::find_points(cv::Mat const & src) {
 //    cv::waitKey(0);
 
     std::vector<Point> points = __PrevittOperator(img);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//    std::cout << "Время: " << duration.count() << " microseconds" << std::endl;
 
     return points;
 }

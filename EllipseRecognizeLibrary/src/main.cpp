@@ -13,12 +13,12 @@ namespace fs = std::filesystem;
 
 //std::string PATH = "../../img_color/IMG_";
 
-//std::string MODE = "IMAGE";
-std::string MODE = "VIDEO";
+std::string MODE = "IMAGE";
+//std::string MODE = "VIDEO";
 std::string PATH = "../../Experiment1/Image_";
 //std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_19.tiff"; // без мяча
-//std::string PATH_IMAGE_TEST = "../../Experiment1/Image_39.bmp";
-std::string PATH_IMAGE_TEST = "../../Experiment1/video3/Image_24.tiff";
+std::string PATH_IMAGE_TEST = "../../Experiment1/Image_36.bmp"; // 16, 55
+//std::string PATH_IMAGE_TEST = "../../Experiment1/video3/Image_20.tiff";
 //std::string PATH_VIDEO = "../../videos/video_3.MOV";
 std::string PATH_VIDEO = "../../Experiment1/video3_1/video_3_1.mp4";
 //std::string PATH_OUT_VIDEO = "../../videos/outVideo.mp4";
@@ -29,10 +29,10 @@ int COUNT_FILER_IMG = 59;
 int main(int argc, char const* argv[]) {
 
 //     Color Filter
-//    ColorFilter colorFilter1;
-//    Cylinder cylinder = colorFilter1.train(PATH, COUNT_FILER_IMG);
-//    cylinder.save(PATH_CYLINDER);
-    Cylinder cylinder;
+    ColorFilter colorFilter1;
+    Cylinder cylinder = colorFilter1.train(PATH, COUNT_FILER_IMG);
+    cylinder.save(PATH_CYLINDER);
+//    Cylinder cylinder;
     cylinder.load(PATH_CYLINDER);
     ColorFilter colorFilter(cylinder);
     std::cout << "Cylinder R = " << cylinder.R << std::endl;
@@ -60,15 +60,12 @@ int main(int argc, char const* argv[]) {
 //    }
         EdgeDetection edgeDetection;
 //    cv::Mat image = images[1];
+
         std::vector<Point> imagePoints = edgeDetection.find_points(img_new);
         cv::Mat emptyImg = cv::Mat::zeros(cv::Size(img_new.cols, img_new.rows),CV_8UC1);
         emptyImg = edgeDetection.draw_points(emptyImg, imagePoints);
         cv::imshow("edgeDetection", emptyImg);
         cv::waitKey(0);
-
-        // Edge Fitting
-
-        // Find Ellipse
 
         // Get Ellipse parameters
 

@@ -32,7 +32,10 @@ Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 
     Ellipse ellipse;
     if (pts.empty()) return ellipse;
 
-    int maxSize = 0;
+    auto start = std::chrono::high_resolution_clock::now();
+
+//    int maxSize = 0;
+    int maxSize = 1280;
     int countPointInRange = 100;
     for (int i = 0; i < pts.size(); ++i) {
         if (pts[i].x > maxSize) {
@@ -46,7 +49,7 @@ Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 
     int count_pts = pts.size();
     cv::Mat center = cv::Mat::zeros(maxSize + 10, maxSize + 10, CV_8U); // img size
 
-    int maxIterations = 10000;
+    int maxIterations = 100;
     for (int i = 0; i < maxIterations; ++i) {
         std::vector<int> index(countPointInRange);
         for (int i = 0; i < countPointInRange; ++i) {
@@ -56,6 +59,7 @@ Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 
         for (int i = 0; i < countPointInRange; ++i) {
             points.push_back(pts[index[i]]);
         }
+
         Ellipse ellipse = __mnk(points);
 
         if (ellipse.y > 0 && ellipse.x > 0 && ellipse.y < maxSize && ellipse.x < maxSize) {
@@ -80,6 +84,11 @@ Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 
 
     ellipse.x = maxLoc.x;
     ellipse.y = maxLoc.y;
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//    std::cout << "Время: " << duration.count() << " microseconds" << std::endl;
 
     return ellipse;
 }

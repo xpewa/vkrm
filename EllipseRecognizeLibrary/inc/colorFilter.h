@@ -47,6 +47,7 @@ class ColorFilter {
     Cylinder cylinder;
 
     cv::Mat __getArrayFromData(cv::Mat const& img, cv::Mat const& mask);
+    cv::Mat __getArrayFromDataWithoutMask(const cv::Mat& img);
     Cylinder __getCylinder(cv::Mat const& pts);
     cv::Mat __ransac(cv::Mat const& pts);
     double __calculateDistancePointPoint(cv::Vec3b const& p1, cv::Vec3b const& p2);

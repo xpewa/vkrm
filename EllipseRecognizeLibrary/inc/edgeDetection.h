@@ -39,6 +39,7 @@ public:
     cv::Mat __fillBlank(cv::Mat const & img);
     std::vector<Point> find_points(cv::Mat const & src);
     cv::Mat draw_points(cv::Mat const & img, std::vector<Point> const & points);
+    std::vector<Point> __PrevittOperatorOptimized(const cv::Mat& img);
 };
 
 #endif //VKRM_EDGEDETECTION_H
