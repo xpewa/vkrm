@@ -29,6 +29,8 @@ struct Contour {
 
 
 class EdgeDetection {
+    int min_size_object;
+    int max_size_object;
 public:
     std::vector<Contour> __findContours(cv::Mat const & image);
     Contour __filterMaxContour(std::vector<Contour> & objects);
@@ -40,6 +42,9 @@ public:
     std::vector<Point> find_points(cv::Mat const & src);
     cv::Mat draw_points(cv::Mat const & img, std::vector<Point> const & points);
     std::vector<Point> __PrevittOperatorOptimized(const cv::Mat& img);
+
+    EdgeDetection(int min_size_object = 100, int max_size_object = 100000000)
+    : min_size_object(min_size_object), max_size_object(max_size_object) {}
 };
 
 #endif //VKRM_EDGEDETECTION_H

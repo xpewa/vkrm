@@ -154,18 +154,18 @@ int main() {
     std::string type_img_experiment_1_video_3_1 = ".tiff";
     int count_img_experiment_1_video_3_1 = 30;
 
-//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1,
-//                                path_test_img_experiment_1,
-//                                type_img_experiment_1,
-//                                count_img_experiment_1);
+    testDetectEllipseExperiment(path_ellipse_centers_experiment_1,
+                                path_test_img_experiment_1,
+                                type_img_experiment_1,
+                                count_img_experiment_1);
 //    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3,
 //                                path_test_img_experiment_1_video_3,
 //                                type_img_experiment_1_video_3,
 //                                count_img_experiment_1_video_3);
-    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3_1,
-                                path_test_img_experiment_1_video_3_1,
-                                type_img_experiment_1_video_3_1,
-                                count_img_experiment_1_video_3_1);
+//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3_1,
+//                                path_test_img_experiment_1_video_3_1,
+//                                type_img_experiment_1_video_3_1,
+//                                count_img_experiment_1_video_3_1);
 
     return 0;
 }

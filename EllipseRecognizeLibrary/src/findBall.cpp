@@ -9,7 +9,7 @@ Ellipse FindBall::findBall(cv::Mat const & img) {
 
 
     cv::Mat img_res = colorFilter.recognize(resize_img);
-    EdgeDetection edgeDetection;
+    EdgeDetection edgeDetection(MIN_SIZE_OBJECT, MAX_SIZE_OBJECT);
     std::vector<Point> imagePoints = edgeDetection.find_points(img_res);
     DetectEllipse detectEllipse;
     Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);

@@ -1,10 +1,6 @@
 #include "edgeDetection.h"
 
 
-int MIN_SIZE_OBJECT = 100;
-int MAX_SIZE_OBJECT = 100000000;
-
-
 cv::Mat EdgeDetection::__GaussianBlur(cv::Mat const & img) {
     cv::Mat res(cv::Size(img.cols, img.rows), CV_8UC1, 255);
     for (int y = 1; y < img.rows - 1; ++y) {
@@ -361,7 +357,7 @@ std::vector<Contour> EdgeDetection::__filterSize(std::vector<Contour> & objects)
         for (Point& point : object.pixels) {
             area += 1;
         }
-        if (area > MIN_SIZE_OBJECT and area < MAX_SIZE_OBJECT) {
+        if (area > this->min_size_object and area < this->max_size_object) {
             filteredContours.push_back(object);
         }
     }
