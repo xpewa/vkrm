@@ -136,7 +136,7 @@ Cylinder ColorFilter::__getCylinder(cv::Mat const& pts) {
     sqrt(A.mul(A)*cv::Mat::ones(3, 1, CV_32F), dp);
     cv::sort(dp, dp, cv::SORT_EVERY_COLUMN);
     f.R = dp.at<float>(round((dp.rows - 1) * 0.4), 0); // radius
-    std::cout << "R " << f.R << std::endl;
+//    std::cout << "R " << f.R << std::endl;
 
     this->cylinder = f;
     return f;

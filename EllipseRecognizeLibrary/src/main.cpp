@@ -10,10 +10,12 @@ namespace fs = std::filesystem;
 #include "edgeDetection.h"
 #include "detectEllipse.h"
 #include "videoRecognize.h"
+#include "findBall.h"
 
 //std::string PATH = "../../img_color/IMG_";
 
-std::string MODE = "IMAGE";
+//std::string MODE = "IMAGE";
+std::string MODE = "IMAGE_SIMPLE";
 //std::string MODE = "VIDEO";
 std::string PATH = "../../Experiment1/Image_";
 //std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_19.tiff"; // без мяча
@@ -26,6 +28,16 @@ std::string PATH_VIDEO = "../../Experiment1/video1/video_1_mp4/video1.mp4";
 std::string PATH_OUT_VIDEO = "../../Experiment1/video1/video_1_mp4/out_video_1.mp4";
 std::string PATH_CYLINDER = "../../cylinder.txt";
 int COUNT_FILER_IMG = 59;
+
+void draw_ellipse(cv::Mat & img, Ellipse const & ellipse) {
+    std::cout << "Ellipse center: (" << ellipse.x << ", " << ellipse.y << ")" << std::endl;
+
+    cv::Point centerCircle1(ellipse.x, ellipse.y);
+    cv::Scalar colorCircle1(0, 0, 255);
+    cv::circle(img, centerCircle1, 10, colorCircle1, cv::FILLED);
+    cv::imshow("img res", img);
+    cv::waitKey(0);
+}
 
 int main(int argc, char const* argv[]) {
 
@@ -72,13 +84,15 @@ int main(int argc, char const* argv[]) {
 
         DetectEllipse detectEllipse;
         Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
-        std::cout << "Ellipse center: (" << ellipse.x << ", " << ellipse.y << ")" << std::endl;
 
-        cv::Point centerCircle1(ellipse.x, ellipse.y);
-        cv::Scalar colorCircle1(0, 0, 255);
-        cv::circle(img, centerCircle1, 10, colorCircle1, cv::FILLED);
-        cv::imshow("img res", img);
-        cv::waitKey(0);
+        draw_ellipse(img, ellipse);
+    }
+
+    else if (MODE == "IMAGE_SIMPLE") {
+        FindBall findBall(colorFilter);
+        cv::Mat img = cv::imread(PATH_IMAGE_TEST);
+        Ellipse ellipse = findBall.findBall(img);
+        draw_ellipse(img, ellipse);
     }
 
     else if (MODE == "VIDEO") {
