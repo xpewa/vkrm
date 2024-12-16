@@ -17,12 +17,13 @@ std::string MODE = "IMAGE";
 //std::string MODE = "VIDEO";
 std::string PATH = "../../Experiment1/Image_";
 //std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_19.tiff"; // без мяча
-std::string PATH_IMAGE_TEST = "../../Experiment1/Image_16.bmp"; // 16, 55
-//std::string PATH_IMAGE_TEST = "../../Experiment1/video3/Image_20.tiff";
+//std::string PATH_IMAGE_TEST = "../../Experiment1/Image_16.bmp"; // 16, 55
+std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_16.tiff";
 //std::string PATH_VIDEO = "../../videos/video_3.MOV";
-std::string PATH_VIDEO = "../../Experiment1/video3_1/video_3_1.mp4";
+//std::string PATH_VIDEO = "../../Experiment1/video3_1/video_3_1.mp4";
+std::string PATH_VIDEO = "../../Experiment1/video1/video_1_mp4/video1.mp4";
 //std::string PATH_OUT_VIDEO = "../../videos/outVideo.mp4";
-std::string PATH_OUT_VIDEO = "../../Experiment1/video3_1/out_video_3_1.mp4";
+std::string PATH_OUT_VIDEO = "../../Experiment1/video1/video_1_mp4/out_video_1.mp4";
 std::string PATH_CYLINDER = "../../cylinder.txt";
 int COUNT_FILER_IMG = 59;
 
@@ -42,8 +43,8 @@ int main(int argc, char const* argv[]) {
 //    cv::Mat img = cv::imread("../../img_color/IMG_3.jpg");
 //    cv::Mat img = cv::imread("../../image1.jpg");
 
-        int up_width = 1000;
-        int up_height = 800;
+        int up_width = 320;
+        int up_height = 256;
         resize(img, img, cv::Size(up_width, up_height), cv::INTER_LINEAR);
 
         cv::Mat img_new = colorFilter.recognize(img);

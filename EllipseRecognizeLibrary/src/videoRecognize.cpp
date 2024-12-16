@@ -1,8 +1,5 @@
 #include "videoRecognize.h"
 
-//cv::Mat VideoRecognize::read_next_part_of_video() {
-//    return cv::Mat();
-//}
 
 void VideoRecognize::recognize_ellipse_in_video(std::string path_out_video) {
     int frame_width = this->cap.get(cv::CAP_PROP_FRAME_WIDTH);
@@ -15,18 +12,17 @@ void VideoRecognize::recognize_ellipse_in_video(std::string path_out_video) {
         if (frame.empty())
             break;
 
-        cv::Mat img_new = colorFilter.recognize(frame);
-
-        EdgeDetection edgeDetection;
-        std::vector<Point> imagePoints = edgeDetection.find_points(img_new);
-        cv::Mat emptyImg = cv::Mat::zeros(cv::Size(img_new.cols, img_new.rows),CV_8UC1);
+//        cv::Mat img_new = colorFilter.recognize(frame);
+//        EdgeDetection edgeDetection;
+//        std::vector<Point> imagePoints = edgeDetection.find_points(img_new);
+//        cv::Mat emptyImg = cv::Mat::zeros(cv::Size(img_new.cols, img_new.rows),CV_8UC1);
 //        emptyImg = edgeDetection.draw_points(emptyImg, imagePoints);
 //        cv::imshow("edgeDetection", emptyImg);
 //        cv::waitKey(0);
-
-        DetectEllipse detectEllipse;
-        Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
+//        DetectEllipse detectEllipse;
+//        Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
 //        std::cout << "Ellipse center: (" << ellipse.x << ", " << ellipse.y << ")" << std::endl;
+        Ellipse ellipse = findBall.findBall(frame);
         cv::Point centerCircle1(ellipse.x, ellipse.y);
         cv::Scalar colorCircle1(0, 0, 255);
         cv::circle(frame, centerCircle1, 10, colorCircle1, cv::FILLED);

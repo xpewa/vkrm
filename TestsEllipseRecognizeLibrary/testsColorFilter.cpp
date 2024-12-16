@@ -103,8 +103,14 @@ int main() {
     std::string type_img_experiment_1_video_3 = ".tiff";
     int count_img_experiment_1_video_3 = 53;
 
+    std::string path_test_img_experiment_1_video_1 = "../../Experiment1/video1/Image_";
+    std::string path_mask_img_experiment_1_video_1 = "../../Experiment1/video1/video_1_mask/Image_";
+    std::string type_img_experiment_1_video_1 = ".tiff";
+    int count_img_experiment_1_video_1 = 18;
+
 //    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
-    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
+//    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
+    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1);
 
     return 0;
 }
