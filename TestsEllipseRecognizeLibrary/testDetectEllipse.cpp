@@ -18,6 +18,45 @@
 std::string PATH = "../../Experiment1/Image_";
 std::string PATH_CYLINDER = "../../cylinder.txt";
 
+void showHistogram(const std::vector<double>& data, const std::string& windowName, int numBins = 10) {
+    if (data.empty()) {
+        std::cout << "No data to display." << std::endl;
+        return;
+    }
+    int minVal = *std::min_element(data.begin(), data.end());
+    int maxVal = *std::max_element(data.begin(), data.end());
+    double binSize = static_cast<double>(maxVal - minVal) / numBins;
+    std::vector<int> bins(numBins, 0);
+    for (int val : data) {
+        int binIndex = static_cast<int>((val - minVal) / binSize);
+        if (binIndex == numBins)
+            binIndex--;
+        bins[binIndex]++;
+    }
+    int histHeight = 800;
+    int histWidth = 1200;
+    int textMargin = 20; // Margin for axis labels
+    cv::Mat histImage(histHeight + 2 * textMargin, histWidth + 2* textMargin, CV_8UC3, cv::Scalar(255, 255, 255));
+    int maxBinCount = *std::max_element(bins.begin(), bins.end());
+    if (maxBinCount == 0) maxBinCount = 1;
+    int binWidth = histWidth / numBins;
+    int endY = histHeight + textMargin;
+    for (int i = 0; i < numBins; ++i) {
+        int barHeight = static_cast<int>(static_cast<double>(bins[i]) / maxBinCount * histHeight);
+        cv::rectangle(histImage, cv::Point(textMargin + i * binWidth, endY),
+                      cv::Point(textMargin + (i + 1) * binWidth, endY - barHeight),
+                      cv::Scalar(123, 104, 238), -1);
+    }
+    for (int i = 0; i < numBins; ++i) {
+        std::string label = std::to_string((int) (minVal + i * binSize));
+        int x = textMargin + i * binWidth;
+        int y = histHeight + textMargin + textMargin/2;
+        cv::putText(histImage, label, cv::Point(x,y), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 0), 1);
+    }
+    cv::imshow(windowName, histImage);
+    cv::waitKey(0);
+}
+
 
 std::vector<Ellipse> readCentersFromFile(const std::string& filename) {
     std::vector<Ellipse> ellipses;
@@ -66,6 +105,8 @@ void calculateMetrics(const std::vector<Ellipse>& real_coords, const std::vector
 //    for (int i = 0; i < errors.size(); ++i) {
 //        std::cout << "error i = " << i << "  : " << errors[i] << std::endl;
 //    }
+
+    showHistogram(errors, "Error Histogram", 12);
 
     std::cout << "Средняя ошибка (MAE): " << mae << std::endl;
     std::cout << "Среднеквадратичная ошибка (RMSE): " << rmse << std::endl;
@@ -159,18 +200,18 @@ int main() {
     std::string type_img_experiment_1_video_1 = ".tiff";
     int count_img_experiment_1_video_1 = 18;
 
-//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1,
-//                                path_test_img_experiment_1,
-//                                type_img_experiment_1,
-//                                count_img_experiment_1);
-//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3,
-//                                path_test_img_experiment_1_video_3,
-//                                type_img_experiment_1_video_3,
-//                                count_img_experiment_1_video_3);
-//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3_1,
-//                                path_test_img_experiment_1_video_3_1,
-//                                type_img_experiment_1_video_3_1,
-//                                count_img_experiment_1_video_3_1);
+    testDetectEllipseExperiment(path_ellipse_centers_experiment_1,
+                                path_test_img_experiment_1,
+                                type_img_experiment_1,
+                                count_img_experiment_1);
+    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3,
+                                path_test_img_experiment_1_video_3,
+                                type_img_experiment_1_video_3,
+                                count_img_experiment_1_video_3);
+    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3_1,
+                                path_test_img_experiment_1_video_3_1,
+                                type_img_experiment_1_video_3_1,
+                                count_img_experiment_1_video_3_1);
     testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_1,
                                 path_test_img_experiment_1_video_1,
                                 type_img_experiment_1_video_1,

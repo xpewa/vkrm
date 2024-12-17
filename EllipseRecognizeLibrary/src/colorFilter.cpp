@@ -40,9 +40,8 @@ Cylinder ColorFilter::train(std::string path, int countImg) {
     for (int i = 1; i < countImg + 1; ++i) {
         img[i] = cv::imread(path + std::to_string(i) + ".bmp");
         img_mask[i] = cv::imread(path + std::to_string(i) + ".png",cv::IMREAD_GRAYSCALE);
-
-        resize(img[i], img[i], cv::Size(500, 500), cv::INTER_LINEAR);
-        resize(img_mask[i], img_mask[i], cv::Size(500, 500), cv::INTER_LINEAR);
+//        resize(img[i], img[i], cv::Size(500, 500), cv::INTER_LINEAR);
+//        resize(img_mask[i], img_mask[i], cv::Size(500, 500), cv::INTER_LINEAR);
     }
 
     std::vector<cv::Mat> data(countImg + 1);

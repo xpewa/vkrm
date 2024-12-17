@@ -18,17 +18,17 @@ int hammingDistance(const cv::Mat& mask1, const cv::Mat& mask2) {
 }
 
 
-// Корреляция (коэффициент сходства) между изображениями.
+// Корреляция между изображениями.
 double compareMasksWithMatchTemplate(const cv::Mat& mask1, const cv::Mat& mask2) {
     if (mask1.size() != mask2.size() || mask1.type() != mask2.type()) {
         throw std::runtime_error("Masks must have the same size and type");
     }
-
     cv::Mat result;
     cv::matchTemplate(mask1, mask2, result, cv::TM_CCOEFF_NORMED); // TM_CCOEFF_NORMED для нормализации
+
     double minVal, maxVal;
     cv::minMaxLoc(result, &minVal, &maxVal);
-    return maxVal; // Максимальное значение - мера сходства
+    return maxVal;
 }
 
 
@@ -36,10 +36,8 @@ double compareMasks(const cv::Mat& mask1, const cv::Mat& mask2) {
     if (mask1.size() != mask2.size() || mask1.type() != mask2.type()) {
         throw std::runtime_error("Masks must have the same size and type");
     }
-
     int totalPixels = mask1.rows * mask1.cols;
     int matchingPixels = 0;
-
     for (int i = 0; i < mask1.rows; ++i) {
         for (int j = 0; j < mask1.cols; ++j) {
             if (mask1.at<uchar>(i, j) == mask2.at<uchar>(i, j)) {
@@ -48,6 +46,58 @@ double compareMasks(const cv::Mat& mask1, const cv::Mat& mask2) {
         }
     }
     return static_cast<double>(matchingPixels) / totalPixels; // Процент совпадений
+}
+
+
+double calculatePrecision(const cv::Mat& mask1, const cv::Mat& mask2) {
+    if (mask1.empty() || mask2.empty() || mask1.size() != mask2.size() || mask1.type() != CV_8U || mask2.type() != CV_8U) {
+        throw std::runtime_error("Invalid input masks. Must be non-empty, same size, and type CV_8U.");
+    }
+    int tp = 0; // True Positives
+    int fp = 0; // False Positives
+    for (int y = 0; y < mask1.rows; ++y) {
+        for (int x = 0; x < mask1.cols; ++x) {
+            if (mask1.at<uchar>(y, x) == 255) {
+                if (mask2.at<uchar>(y, x) == 255) {
+                    tp++;
+                }
+                else {
+                    fp++;
+                }
+            }
+
+        }
+    }
+    if (tp + fp == 0) return 0.0;
+    return static_cast<double>(tp) / (tp + fp);
+}
+
+double calculateRecall(const cv::Mat& mask1, const cv::Mat& mask2) {
+    if (mask1.empty() || mask2.empty() || mask1.size() != mask2.size() || mask1.type() != CV_8U || mask2.type() != CV_8U) {
+        throw std::runtime_error("Invalid input masks. Must be non-empty, same size, and type CV_8U.");
+    }
+    int tp = 0; // True Positives
+    int fn = 0; // False Negatives
+    for (int y = 0; y < mask1.rows; ++y) {
+        for (int x = 0; x < mask1.cols; ++x) {
+            if (mask2.at<uchar>(y, x) == 255) {
+                if (mask1.at<uchar>(y, x) == 255) {
+                    tp++;
+                }
+                else
+                    fn++;
+            }
+        }
+    }
+    if (tp + fn == 0) return 0.0;
+    return static_cast<double>(tp) / (tp + fn);
+}
+
+double calculateF1Score(const cv::Mat& mask1, const cv::Mat& mask2) {
+    double precision = calculatePrecision(mask1, mask2);
+    double recall = calculateRecall(mask1, mask2);
+    if (precision + recall == 0) return 0.0;
+    return 2.0 * (precision * recall) / (precision + recall);
 }
 
 
@@ -67,6 +117,9 @@ void testColorFilter(std::string path_test_img, std::string path_mask_img, std::
     int mean_distance = 0;
     double mean_similarity_matchTemplate = 0;
     double mean_similarity = 0;
+    double mean_precision = 0;
+    double mean_recall = 0;
+    double mean_f1_score = 0;
     try {
         for (int i = 1; i < count_img + 1; ++i) {
             cv::Mat img_test = cv::imread(path_test_img + std::to_string(i) + type_img);
@@ -76,16 +129,23 @@ void testColorFilter(std::string path_test_img, std::string path_mask_img, std::
             mean_distance += hammingDistance(img_res, img_real);
             mean_similarity_matchTemplate += compareMasksWithMatchTemplate(img_res, img_real);
             mean_similarity += compareMasks(img_res, img_real);
+            mean_precision += calculatePrecision(img_real, img_res);
+            mean_recall += calculateRecall(img_real, img_res);
+            mean_f1_score += calculateF1Score(img_real, img_res);
         }
         mean_distance /= count_img;
         mean_similarity_matchTemplate /= count_img;
         mean_similarity /= count_img;
+        mean_precision /= count_img;
+        mean_recall /= count_img;
+        mean_f1_score /= count_img;
 
         std::cout << "Mean Hamming Distance: " << mean_distance << std::endl;
-
         std::cout << "Mean Similarity (matchTemplate): " << mean_similarity_matchTemplate * 100 << "%" << std::endl;
-
         std::cout << "Mean Similarity: " << mean_similarity * 100 << "%" << std::endl;
+        std::cout << "Mean Precision: " << mean_precision << std::endl;
+        std::cout << "Mean Recall: " << mean_recall << std::endl;
+        std::cout << "Mean F1 Score: " << mean_f1_score << std::endl;
     } catch (const std::runtime_error& error) {
         std::cerr << "Error: " << error.what() << std::endl;
     }
@@ -108,9 +168,9 @@ int main() {
     std::string type_img_experiment_1_video_1 = ".tiff";
     int count_img_experiment_1_video_1 = 18;
 
-//    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
+    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
 //    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
-    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1);
+//    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1);
 
     return 0;
 }

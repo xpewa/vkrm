@@ -14,13 +14,12 @@ namespace fs = std::filesystem;
 
 //std::string PATH = "../../img_color/IMG_";
 
-//std::string MODE = "IMAGE";
-std::string MODE = "IMAGE_SIMPLE";
+std::string MODE = "IMAGE";
+//std::string MODE = "IMAGE_SIMPLE";
 //std::string MODE = "VIDEO";
 std::string PATH = "../../Experiment1/Image_";
-//std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_19.tiff"; // без мяча
-//std::string PATH_IMAGE_TEST = "../../Experiment1/Image_16.bmp"; // 16, 55
-std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_16.tiff";
+std::string PATH_IMAGE_TEST = "../../Experiment1/Image_16.bmp"; // 16, 45
+//std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_10.tiff";
 //std::string PATH_VIDEO = "../../videos/video_3.MOV";
 //std::string PATH_VIDEO = "../../Experiment1/video3_1/video_3_1.mp4";
 std::string PATH_VIDEO = "../../Experiment1/video1/video_1_mp4/video1.mp4";
@@ -55,14 +54,16 @@ int main(int argc, char const* argv[]) {
 //    cv::Mat img = cv::imread("../../img_color/IMG_3.jpg");
 //    cv::Mat img = cv::imread("../../image1.jpg");
 
-        int up_width = 320;
-        int up_height = 256;
+//        int up_width = 1280 / 4;
+//        int up_height = 1024 / 4;
+        int up_width = 1000;
+        int up_height = 800;
         resize(img, img, cv::Size(up_width, up_height), cv::INTER_LINEAR);
 
         cv::Mat img_new = colorFilter.recognize(img);
         cv::imshow("img", img);
         cv::waitKey(0);
-        cv::imshow("img new", img_new);
+        cv::imshow("colorFilter", img_new);
         cv::waitKey(0);
 
         // Edge Detection
