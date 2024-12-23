@@ -26,6 +26,9 @@ add_executable(vkrm ${vkrm_source})
 target_link_libraries(vkrm ${OpenCV_LIBS})
 target_include_directories(vkrm PUBLIC inc)
 
+find_package(Eigen3 REQUIRED)
+include_directories(/usr/local/include/eigen3)
+
 add_library( vkrm_lib STATIC ${vkrm_source} )
 target_link_libraries(vkrm_lib ${OpenCV_LIBS})
 target_include_directories(vkrm_lib PUBLIC inc)

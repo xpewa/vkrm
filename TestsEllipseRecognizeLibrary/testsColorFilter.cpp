@@ -110,7 +110,7 @@ void testColorFilter(std::string path_test_img, std::string path_mask_img, std::
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(PATH, count_img);
+        cylinder = colorFilter.train(PATH, PATH, ".bmp", ".png", count_img);
         cylinder.save(PATH_CYLINDER);
     }
 
@@ -169,8 +169,8 @@ int main() {
     int count_img_experiment_1_video_1 = 18;
 
     testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
-//    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
-//    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1);
+    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
+    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1);
 
     return 0;
 }

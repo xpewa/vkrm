@@ -8,8 +8,9 @@ cv::Mat ColorFilter::__getArrayFromData(cv::Mat const& img, cv::Mat const& mask)
         cv::Vec3b const * img_line = img.ptr<cv::Vec3b>(y);
         uchar const * mask_line = mask.ptr<uchar>(y);
         for (int x = 0; x < Nx; ++x) {
-            if (mask_line[x] == 255)
+            if (mask_line[x] > 128) {
                 result.push_back(img_line[x]);
+            }
         }
     }
     result = result.reshape(1);
@@ -32,14 +33,14 @@ cv::Mat ColorFilter::__getArrayFromDataWithoutMask(const cv::Mat& img) {
     return result;
 }
 
-Cylinder ColorFilter::train(std::string path, int countImg) {
+Cylinder ColorFilter::train(std::string path_img, std::string path_mask, std::string type_img, std::string type_mask, int countImg) {
     ColorFilter colorFilter;
     std::vector<cv::Mat> img(countImg + 1);
     std::vector<cv::Mat> img_mask(countImg + 1);
 
     for (int i = 1; i < countImg + 1; ++i) {
-        img[i] = cv::imread(path + std::to_string(i) + ".bmp");
-        img_mask[i] = cv::imread(path + std::to_string(i) + ".png",cv::IMREAD_GRAYSCALE);
+        img[i] = cv::imread(path_img + std::to_string(i) + type_img);
+        img_mask[i] = cv::imread(path_mask + std::to_string(i) + type_mask,cv::IMREAD_GRAYSCALE);
 //        resize(img[i], img[i], cv::Size(500, 500), cv::INTER_LINEAR);
 //        resize(img_mask[i], img_mask[i], cv::Size(500, 500), cv::INTER_LINEAR);
     }
@@ -171,7 +172,7 @@ cv::Mat ColorFilter::__ransac(cv::Mat const& pts) {
 
     cv::Mat bestInliers = cv::Mat(0, 1, CV_32FC3);
     int maxIterations = 100;
-    double threshold = 70000.0;
+    double threshold = 70000.0; // 70000
 
     for (int i = 0; i < maxIterations; ++i) {
         // Выбираем две случайные точки

@@ -55,7 +55,7 @@ class ColorFilter {
 public:
     ColorFilter() {}
     ColorFilter(Cylinder cylinder) : cylinder(cylinder) {}
-    Cylinder train(std::string path, int countImg);
+    Cylinder train(std::string path_img, std::string path_mask, std::string type_img, std::string type_mask, int countImg);
     cv::Mat recognize(cv::Mat const& img);
 
 };

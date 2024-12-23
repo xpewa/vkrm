@@ -14,8 +14,8 @@ namespace fs = std::filesystem;
 
 //std::string PATH = "../../img_color/IMG_";
 
-std::string MODE = "IMAGE";
-//std::string MODE = "IMAGE_SIMPLE";
+//std::string MODE = "IMAGE";
+std::string MODE = "IMAGE_SIMPLE";
 //std::string MODE = "VIDEO";
 std::string PATH = "../../Experiment1/Image_";
 std::string PATH_IMAGE_TEST = "../../Experiment1/Image_16.bmp"; // 16, 45
@@ -42,7 +42,7 @@ int main(int argc, char const* argv[]) {
 
 //     Color Filter
     ColorFilter colorFilter1;
-    Cylinder cylinder = colorFilter1.train(PATH, COUNT_FILER_IMG);
+    Cylinder cylinder = colorFilter1.train(PATH, PATH, ".bmp", ".png", COUNT_FILER_IMG);
     cylinder.save(PATH_CYLINDER);
 //    Cylinder cylinder;
     cylinder.load(PATH_CYLINDER);
@@ -86,14 +86,24 @@ int main(int argc, char const* argv[]) {
         DetectEllipse detectEllipse;
         Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
 
+        std::cout << "x: " << ellipse.x << std::endl;
+        std::cout << "y: " << ellipse.y << std::endl;
+        std::cout << "angle: " << ellipse.angle << std::endl;
+        std::cout << "R1: " << ellipse.R1 << std::endl;
+        std::cout << "R2: " << ellipse.R2 << std::endl;
+
         draw_ellipse(img, ellipse);
     }
 
     else if (MODE == "IMAGE_SIMPLE") {
         FindBall findBall(colorFilter);
         cv::Mat img = cv::imread(PATH_IMAGE_TEST);
-        Ellipse ellipse = findBall.findBall(img);
-        draw_ellipse(img, ellipse);
+        Ellipse ellipse = findBall.getEllipseParameters(img);
+        cv::Mat img_clone = img.clone();
+        draw_ellipse(img_clone, ellipse);
+
+        Ball ball = findBall.findBall(img);
+        std::cout << "x, y, z = " << ball.x << ", " << ball.y << ", " << ball.z << std::endl;
     }
 
     else if (MODE == "VIDEO") {

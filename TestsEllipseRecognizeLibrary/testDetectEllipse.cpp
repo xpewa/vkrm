@@ -1,18 +1,9 @@
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include <cassert>
-#include <fstream>
-#include <string>
-#include <numeric>
-#include <chrono>
-#include <vector>
-#include <numeric>
-
-
 #include "colorFilter.h"
 #include "edgeDetection.h"
 #include "detectEllipse.h"
 #include "findBall.h"
+
+#include "testCommon.h"
 
 
 std::string PATH = "../../Experiment1/Image_";
@@ -57,31 +48,6 @@ void showHistogram(const std::vector<double>& data, const std::string& windowNam
     cv::waitKey(0);
 }
 
-
-std::vector<Ellipse> readCentersFromFile(const std::string& filename) {
-    std::vector<Ellipse> ellipses;
-    std::ifstream file(filename);
-
-    if (file.is_open()) {
-        std::string line;
-        while (getline(file, line)) {
-            std::stringstream ss(line);
-            Ellipse ellipse;
-            ss >> ellipse.x >> ellipse.y;
-            if (ss) {
-                ellipses.push_back(ellipse);
-            } else {
-                std::cerr << "Error reading line: " << line << std::endl;
-            }
-        }
-        file.close();
-    } else {
-        std::cerr << "Unable to open file: " << filename << std::endl;
-    }
-    return ellipses;
-}
-
-
 double calculateError(const Ellipse & real, const Ellipse & predicted) {
     double dx = predicted.x - real.x;
     double dy = predicted.y - real.y;
@@ -106,7 +72,7 @@ void calculateMetrics(const std::vector<Ellipse>& real_coords, const std::vector
 //        std::cout << "error i = " << i << "  : " << errors[i] << std::endl;
 //    }
 
-    showHistogram(errors, "Error Histogram", 12);
+//    showHistogram(errors, "Error Histogram", 12);
 
     std::cout << "Средняя ошибка (MAE): " << mae << std::endl;
     std::cout << "Среднеквадратичная ошибка (RMSE): " << rmse << std::endl;
@@ -127,7 +93,7 @@ void testDetectEllipseExperiment(std::string path_ellipse_centers, std::string p
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(PATH, count_img);
+        cylinder = colorFilter.train(PATH, PATH, ".bmp", ".png", count_img);
         cylinder.save(PATH_CYLINDER);
     }
     FindBall findBall(colorFilter);
@@ -158,7 +124,7 @@ void testDetectEllipseExperiment(std::string path_ellipse_centers, std::string p
 
         auto start = std::chrono::high_resolution_clock::now();
 
-        Ellipse ellipse = findBall.findBall(img_test);
+        Ellipse ellipse = findBall.getEllipseParameters(img_test);
 
         auto end = std::chrono::high_resolution_clock::now();
 

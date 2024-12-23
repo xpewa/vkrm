@@ -22,7 +22,7 @@ void VideoRecognize::recognize_ellipse_in_video(std::string path_out_video) {
 //        DetectEllipse detectEllipse;
 //        Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
 //        std::cout << "Ellipse center: (" << ellipse.x << ", " << ellipse.y << ")" << std::endl;
-        Ellipse ellipse = findBall.findBall(frame);
+        Ellipse ellipse = findBall.getEllipseParameters(frame);
         cv::Point centerCircle1(ellipse.x, ellipse.y);
         cv::Scalar colorCircle1(0, 0, 255);
         cv::circle(frame, centerCircle1, 10, colorCircle1, cv::FILLED);
