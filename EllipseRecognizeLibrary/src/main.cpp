@@ -14,11 +14,11 @@ namespace fs = std::filesystem;
 
 //std::string PATH = "../../img_color/IMG_";
 
-//std::string MODE = "IMAGE";
-std::string MODE = "IMAGE_SIMPLE";
+std::string MODE = "IMAGE";
+//std::string MODE = "IMAGE_SIMPLE";
 //std::string MODE = "VIDEO";
 std::string PATH = "../../Experiment1/Image_";
-std::string PATH_IMAGE_TEST = "../../Experiment1/Image_16.bmp"; // 16, 45
+std::string PATH_IMAGE_TEST = "../../Experiment1/Image_45.bmp"; // 16, 45
 //std::string PATH_IMAGE_TEST = "../../Experiment1/video1/Image_10.tiff";
 //std::string PATH_VIDEO = "../../videos/video_3.MOV";
 //std::string PATH_VIDEO = "../../Experiment1/video3_1/video_3_1.mp4";
@@ -48,6 +48,10 @@ int main(int argc, char const* argv[]) {
     cylinder.load(PATH_CYLINDER);
     ColorFilter colorFilter(cylinder);
     std::cout << "Cylinder R = " << cylinder.R << std::endl;
+    std::cout << "Cylinder v = " << cylinder.v << std::endl;
+    std::cout << "Cylinder p0 = " << cylinder.p0 << std::endl;
+    std::cout << "Cylinder t1 = " << cylinder.t1 << std::endl;
+    std::cout << "Cylinder t2 = " << cylinder.t2 << std::endl;
 
     if (MODE == "IMAGE") {
         cv::Mat img = cv::imread(PATH_IMAGE_TEST);

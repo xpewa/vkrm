@@ -1,5 +1,6 @@
 #include "findBall.h"
 
+// ----------------------------------- GET ELLIPSE ----------------------------------------------
 
 Ellipse FindBall::getEllipseParameters(cv::Mat const & img) {
     cv::Mat resize_img = img.clone();
@@ -14,12 +15,19 @@ Ellipse FindBall::getEllipseParameters(cv::Mat const & img) {
 //    cv::waitKey(0);
     EdgeDetection edgeDetection(MIN_SIZE_OBJECT, MAX_SIZE_OBJECT);
     std::vector<Point> imagePoints = edgeDetection.find_points(img_res);
+    edgePoints = imagePoints;
 //    cv::Mat emptyImg = cv::Mat::zeros(cv::Size(img_res.cols, img_res.rows),CV_8UC1);
 //    emptyImg = edgeDetection.draw_points(emptyImg, imagePoints);
 //    cv::imshow("edgeDetection", emptyImg);
 //    cv::waitKey(0);
     DetectEllipse detectEllipse;
-    Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
+    Ellipse ellipse_res = detectEllipse.detectEllipse(imagePoints);
+    ellipse = ellipse_res;
+//    cv::Point centerCircle1(ellipse.x, ellipse.y);
+//    cv::Scalar colorCircle1(0, 0, 255);
+//    cv::circle(resize_img, centerCircle1, 3, colorCircle1, cv::FILLED);
+//    cv::imshow("img res", resize_img);
+//    cv::waitKey(0);
 
     ellipse.x *= scale;
     ellipse.y *= scale;
@@ -29,152 +37,442 @@ Ellipse FindBall::getEllipseParameters(cv::Mat const & img) {
     return ellipse;
 }
 
+// ----------------------------------- USEFUL ----------------------------------------------
 
-cv::Vec3d findPlaneNormal(const std::vector<cv::Vec3d>& vectors) {
-    cv::Vec3d sum_of_vectors(0, 0, 0);
-    for (const auto& vec : vectors) {
-        double magnitude = sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-        if (magnitude == 0) continue;
-        sum_of_vectors += vec / magnitude;
-    }
-
-    cv::Vec3d average_vector = sum_of_vectors / static_cast<double>(vectors.size());
-
-    double average_magnitude = sqrt(average_vector[0] * average_vector[0] +
-                                    average_vector[1] * average_vector[1] +
-                                    average_vector[2] * average_vector[2]);
-
-    if (average_magnitude == 0)
-        return cv::Vec3d(0,0,0);
-
-    return average_vector / average_magnitude;
+double deg2rad(double deg) {
+    return deg * M_PI / 180.0;
 }
 
-double findConeApexAngle(const std::vector<cv::Vec3d>& points, const cv::Vec3d& normal) {
-    double sumAngles = 0.0;
-    double normalMagnitude = sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]);
+// ----------------------------------- CAMERA ----------------------------------------------
 
-    for (const auto& point : points) {
-        double dotProduct = point[0] * normal[0] + point[1] * normal[1] + point[2] * normal[2];
-        double pointMagnitude = sqrt(point[0]*point[0] + point[1]*point[1] + point[2]*point[2]);
 
-        double cosAngle = dotProduct / (normalMagnitude * pointMagnitude);
+Vec3 Camera::cameraToWorld(const Vec3 & Pc) {
+    // Pc = R * Pw + T,
+    // Pw = R^T * (Pc - T)
+    Vec3 diff;
+    diff.x = Pc.x - T.x;
+    diff.y = Pc.y - T.y;
+    diff.z = Pc.z - T.z;
+    Vec3 Pw;
+    // Умножаем на транспонированную матрицу R (столбцы становятся строками)
+    Pw.x = R[0][0] * diff.x + R[1][0] * diff.y + R[2][0] * diff.z;
+    Pw.y = R[0][1] * diff.x + R[1][1] * diff.y + R[2][1] * diff.z;
+    Pw.z = R[0][2] * diff.x + R[1][2] * diff.y + R[2][2] * diff.z;
+    return Pw;
+}
 
-        if (abs(cosAngle) > 1.0) {
-            cosAngle = (cosAngle > 0) ? 1.0 : -1.0;
+
+void Camera::computeCameraExtrinsics() {
+    // Переводим углы в радианы
+    double rx = deg2rad(rotx);
+    double ry = deg2rad(roty);
+    double rz = deg2rad(rotz);
+
+    // Вычисляем матрицы поворота по каждой оси
+    double Rx[3][3] = {
+            {1,         0,          0},
+            {0, cos(rx), -sin(rx)},
+            {0, sin(rx),  cos(rx)}
+    };
+    double Ry[3][3] = {
+            { cos(ry), 0, sin(ry)},
+            {      0,  1,      0},
+            {-sin(ry), 0, cos(ry)}
+    };
+    double Rz[3][3] = {
+            {cos(rz), -sin(rz), 0},
+            {sin(rz),  cos(rz), 0},
+            {     0,       0,   1}
+    };
+
+    // R = Rz * Ry * Rx.
+    // R_temp = Ry * Rx:
+    double R_temp[3][3] = {0};
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            R_temp[i][j] = 0;
+            for (int k = 0; k < 3; k++) {
+                R_temp[i][j] += Ry[i][k] * Rx[k][j];
+            }
         }
-
-        sumAngles += acos(cosAngle);
     }
-    return 2.0 * sumAngles / points.size(); // в радианах
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            R[i][j] = 0;
+            for (int k = 0; k < 3; k++) {
+                R[i][j] += Rz[i][k] * R_temp[k][j];
+            }
+        }
+    }
+
+    T = {transx, transy, transz};
 }
 
-// Функция для вычисления 3D координат мяча
-cv::Vec3d findBallCoordinates(const cv::Vec3d& normal, double coneAngle, double ballRadius) {
-    double sinHalfAngle = sin(coneAngle / 2.0);
-    double normalMagnitude = sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]);
-    double distance = ballRadius / sinHalfAngle;
 
-    std::cout << "distance: " << distance << std::endl;
+// ----------------------------------- FIND BALL ----------------------------------------------
 
-    return (distance / normalMagnitude) * normal;
+Ball FindBall::findBall(cv::Mat const & img) {
+//    cv::imshow("initial img", img);
+//    cv::waitKey(0);
+    Ellipse ellipse = getEllipseParameters(img);
+    Camera camera;
+    Ball ball;
+    auto start = std::chrono::high_resolution_clock::now();
+    ball = estimate3dCoords_1();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//    std::cout << "Среднее время обработки изображения: " << duration.count() << " microseconds" << std::endl;
+//    std::cout << "distance in mm: " << 50 * 120 / (ellipse.R1 * 0.025 ) << std::endl;
+    return ball;
 }
 
-// Функция для создания набора 3D точек из эллипса на изображении
-std::vector<cv::Vec3d> get3DPointsFromEllipse(const Camera& camera, const Ellipse& ellipse, int numPoints) {
-    std::vector<cv::Vec3d> points3D;
+// ----------------------------------- USEFUL FOR FIND BALL 1 and 3 ----------------------------------------------
 
-    std::vector<cv::Point2f> ellipsePoints;
+Vec3 FindBall::pixelToRay(double u, double v) {
+    double x = (u - camera.cx) / camera.fx; // (u - cx) / fx
+    double y = (v - camera.cy) / camera.fy; // (v - cy) / fy
+    double z = 1.0;
+
+    Vec3 rayDirection = {x, y, z};
+    return rayDirection.normalize();
+}
+
+
+std::vector<Point> FindBall::get2DPointsFromEllipse(int numPoints) {
+    std::vector<Point> ellipsePoints;
     for (int i = 0; i < numPoints; ++i) {
         double angle = 2 * M_PI * i / numPoints;
         float x = ellipse.R1 * cos(angle);
         float y = ellipse.R2 * sin(angle);
-
-        // относительно нуля
         cv::Mat rotationMatrix = cv::getRotationMatrix2D(cv::Point2f(0,0), ellipse.angle, 1.0);
-
-        // относительно нуля
         cv::Mat point2D = (cv::Mat_<double>(3, 1) << x, y, 1);
-
         cv::Mat rotatedPoint = rotationMatrix * point2D;
-
-        // Получаем точку после поворота, и смещаем ее.
-        ellipsePoints.push_back(cv::Point2f(rotatedPoint.at<double>(0) + ellipse.x, rotatedPoint.at<double>(1) + ellipse.y));
+        ellipsePoints.push_back(Point(rotatedPoint.at<double>(0) + ellipse.x, rotatedPoint.at<double>(1) + ellipse.y));
     }
 //    cv::Mat new_img = cv::Mat::zeros(cv::Size(1280, 1024),CV_8UC1);
 //    for (int i = 0; i < ellipsePoints.size(); ++i) {
-//        cv::Point2f p = ellipsePoints[i];
+//        Point p = ellipsePoints[i];
 //        cv::Point centerCircle(p.x, p.y);
 //        cv::Scalar colorCircle(255);
 //        cv::circle(new_img, centerCircle, 1, colorCircle, cv::FILLED);
 //    }
 //    cv::imshow("ellipsePoints", new_img);
 //    cv::waitKey(0);
+    return ellipsePoints;
+}
 
-    // 2. Обратная проекция каждой точки в 3D
-    for (const auto& point2D : ellipsePoints) {
-        std::vector<cv::Point2f> distorted_points = {point2D};
-        std::vector<cv::Point2f> undistorted_points;
-        cv::undistortPoints(distorted_points, undistorted_points, camera.get_camera_matrix(), camera.get_distortion_coeff());
-        cv::Point2f undistorted_point = undistorted_points[0];
-//        cv::Point2f undistorted_point = point2D;
 
-        cv::Mat point3DHomogeneous = (cv::Mat_<double>(3,1) << undistorted_point.x, undistorted_point.y, 1);
+Vec3 findNormalFromThreePoints(const Vec3& p1, const Vec3& p2, const Vec3& p3) {
+    Vec3 v1 = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
+    Vec3 v2 = {p3.x - p1.x, p3.y - p1.y, p3.z - p1.z};
+    Vec3 norm = v1.cross(v2).normalize();
+    return norm;
+}
 
-        points3D.push_back(cv::Vec3d(point3DHomogeneous.at<double>(0),
-                                     point3DHomogeneous.at<double>(1),
-                                     point3DHomogeneous.at<double>(2)));
+
+Vec3 FindBall::getNormalForPlane(const std::vector<Vec3>& points) {
+    int count_random = 100;
+
+    Vec3 averageNormal = {0.0, 0.0, 0.0};
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, points.size() - 1);
+
+    for (int i = 0; i < count_random; ++i) {
+        int index1 = distrib(gen);
+        int index2 = distrib(gen);
+        int index3 = distrib(gen);
+        // Убеждаемся, что все индексы разные
+        while (index2 == index1) {
+            index2 = distrib(gen);
+        }
+        while (index3 == index1 || index3 == index2) {
+            index3 = distrib(gen);
+        }
+        Vec3 p1 = points[index1];
+        Vec3 p2 = points[index2];
+        Vec3 p3 = points[index3];
+        Vec3 normal = findNormalFromThreePoints(p1, p2, p3);
+        // Проверяем, направлена ли новая нормаль в ту же сторону, что и средняя нормаль
+        if (i > 0 && normal.dot(averageNormal) < 0) {
+            normal.x = -normal.x;
+            normal.y = -normal.y;
+            normal.z = -normal.z;
+        }
+        averageNormal.x += normal.x;
+        averageNormal.y += normal.y;
+        averageNormal.z += normal.z;
     }
-    return points3D;
-}
+    averageNormal.x /= count_random;
+    averageNormal.y /= count_random;
+    averageNormal.z /= count_random;
 
-cv::Vec3d transformVectorCameraToWorld(const Camera& camera, const cv::Vec3d& vector) {
-    cv::Mat vector_homogeneous = (cv::Mat_<double>(4, 1) << vector[0], vector[1], vector[2], 1);
+    averageNormal = averageNormal.normalize();
 
-    std::cout << camera.get_world_to_camera_matrix() << std::endl;
+    if (averageNormal.z < 0) {
+        averageNormal.x = -averageNormal.x;
+        averageNormal.y = -averageNormal.y;
+        averageNormal.z = -averageNormal.z;
+    }
 
-    cv::Mat camera_to_world_matrix = camera.get_world_to_camera_matrix().inv(cv::DECOMP_SVD);
-    cv::Mat camera_to_world =  (cv::Mat_<double>(4, 4) <<
-            0.6947, -0.3040, 0.6519, 2.0000,
-            0.7193,  0.2936, -0.6296, -2.0000,
-            0.0000,  0.9063,  0.4226,  1.0000,
-            0.0000,  0.0000,  0.0000,  1.0000);
-
-    cv::Mat world_vector_homogeneous = camera_to_world * vector_homogeneous;
-    cv::Vec3d world_vector(world_vector_homogeneous.at<double>(0),
-                       world_vector_homogeneous.at<double>(1),
-                       world_vector_homogeneous.at<double>(2));
-    return world_vector;
+    return averageNormal;
 }
 
 
-Ball FindBall::estimate3dCoords(Ellipse ellipse, Camera camera) {
+double FindBall::computeConeAngle(const std::vector<Vec3>& edgeVectors, const Vec3& planeNormal) {
+    std::vector<double> angles;
+    double sumAngles = 0.0;
+    for (const auto& v : edgeVectors) {
+        double cosTheta = v.dot(planeNormal);
+//        std::cout << "cosAngle: " << cosTheta << std::endl;
+        cosTheta = std::max(-1.0, std::min(1.0, cosTheta));
+        double theta = std::acos(cosTheta);
+        angles.push_back(theta);
+        sumAngles += theta;
+    }
+    double maxAngle = 0.0;
+    for (double angle : angles) {
+        maxAngle = std::max(maxAngle, angle);
+    }
+    return 2.0 * std::min(maxAngle, M_PI - maxAngle); // * 180 / M_PI
+//    return 2.0 * std::min((sumAngles / edgeVectors.size()), M_PI - (sumAngles / edgeVectors.size()));
+}
 
-    std::vector<cv::Vec3d> points = get3DPointsFromEllipse(camera, ellipse, 10);
 
-    cv::Vec3d normal = findPlaneNormal(points);
-    std::cout << "normal: " << normal << std::endl;
+Vec3 FindBall::calculateBallCenter13(const Vec3& planeNormal, double coneApexAngle) {
+    double halfAngle = coneApexAngle / 2.0;
+    double distance = BALL_RADIUS / std::sin(halfAngle);
+//    std::cout << "distance: " << distance << std::endl;
+    Vec3 result;
+    Vec3 normPlaneNormal = planeNormal.normalize();
+    result.x = distance * normPlaneNormal.x;
+    result.y = distance * normPlaneNormal.y;
+    result.z = distance * normPlaneNormal.z;
+    return result;
+}
 
-    double coneAngle = findConeApexAngle(points, normal);
-    std::cout << "Cone Apex Angle: " << coneAngle * 180 / M_PI << " degrees" << std::endl;
 
-    cv::Vec3d ballCoordinates = findBallCoordinates(normal, coneAngle, BALL_RADIUS);
-//    ballCoordinates = transformVectorCameraToWorld(camera, ballCoordinates);
+std::vector<Point> FindBall::getContourPoints(const cv::Mat& image, int n) {
+    std::vector<Point> points;
+    // координаты белых пикселей
+    std::vector<Point> whitePixels;
+    for (int y = 0; y < image.rows; ++y) {
+        for (int x = 0; x < image.cols; ++x) {
+            if (image.at<uchar>(y, x) > 0) {
+                whitePixels.push_back({x, y});
+            }
+        }
+    }
+    if (whitePixels.empty()) {
+        std::cerr << "Нет белых пикселей" << std::endl;
+        return points;
+    }
+    // центр масс белых пикселей
+    Point center(0, 0);
+    for (const auto& p : whitePixels) {
+        center.x += p.x;
+        center.y += p.y;
+    }
+    center.x /= whitePixels.size();
+    center.y /= whitePixels.size();
+    // среднее расстояние от центра
+    double outerRadius = 0;
+    for (const auto& p : whitePixels) {
+        outerRadius += std::sqrt(std::pow(p.x - center.x, 2) + std::pow(p.y - center.y, 2));
+    }
+    outerRadius /= whitePixels.size();
+    // граничные пиксели
+    std::vector<Point> boundaryPixels;
+    double radiusTolerance = 0.2 * outerRadius; // Погрешность для определения радиуса
+    for (Point& p : whitePixels) {
+        double distanceToCenter = std::sqrt(std::pow(p.x - center.x, 2) + std::pow(p.y - center.y, 2));
+        bool isBoundary = false;
+        if (p.x > 0 && image.at<uchar>(p.y, p.x - 1) == 0) isBoundary = true;
+        if (p.x < image.cols - 1 && image.at<uchar>(p.y, p.x + 1) == 0) isBoundary = true;
+        if (p.y > 0 && image.at<uchar>(p.y - 1, p.x) == 0) isBoundary = true;
+        if (p.y < image.rows - 1 && image.at<uchar>(p.y + 1, p.x) == 0) isBoundary = true;
 
-    Ball ball;
-    ball.x = ballCoordinates[0];
-    ball.y = ballCoordinates[1];
-    ball.z = ballCoordinates[2];
+        if (isBoundary && std::abs(distanceToCenter - outerRadius) < radiusTolerance) {
+//        if (isBoundary && distanceToCenter > outerRadius) {
+            boundaryPixels.push_back(p);
+        }
+    }
+    // сортировка граничных пикселей по углу относительно центра
+    std::sort(boundaryPixels.begin(), boundaryPixels.end(), [&](const Point& a, const Point& b) {
+        double angleA = std::atan2(a.y - center.y, a.x - center.x);
+        double angleB = std::atan2(b.y - center.y, b.x - center.x);
+        return angleA < angleB;
+    });
+    // выбор n точек, равномерно распределенных по отсортированному списку
+    if (boundaryPixels.size() < n) {
+        std::cerr << "Недостаточно точек на контуре" << std::endl;
+        for (const Point& p : boundaryPixels) {
+            points.push_back(p);
+        }
+    } else {
+        double step = static_cast<double>(boundaryPixels.size()) / n;
+        for (int i = 0; i < n; ++i) {
+            int index = static_cast<int>(std::round(i * step));
+            points.push_back(boundaryPixels[index]);
+        }
+    }
+    return points;
+}
+
+
+// ----------------------------------- FIND BALL 1 ----------------------------------------------
+
+
+Ball FindBall::estimate3dCoords_1() {
+    std::vector<Point> edgeVectors2D = get2DPointsFromEllipse(3);
+    std::vector<Vec3> edgeVectors;
+    for (const auto& pixel : edgeVectors2D) {
+        Vec3 ray = pixelToRay(pixel.x, pixel.y);
+        edgeVectors.push_back(ray);
+    }
+//    std::cout << "3d вектора:" << std::endl;
+//    for (const auto& vec : edgeVectors) {
+//        std::cout << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]" << std::endl;
+//    }
+
+    Vec3 planeNormal = getNormalForPlane(edgeVectors);
+//    std::cout << "Нормаль: ("
+//              << planeNormal.x << ", " << planeNormal.y << ", " << planeNormal.z << ")\n";
+
+    double coneApexAngle = computeConeAngle(edgeVectors, planeNormal);
+//    std::cout << "Угол при вершине конуса: " << coneApexAngle << std::endl;
+
+    Vec3 Pc = calculateBallCenter13(planeNormal, coneApexAngle);
+
+    Ball ball = {Pc.x, Pc.y, Pc.z};
+    return ball;
+}
+
+// ----------------------------------- FIND BALL 3 ----------------------------------------------
+
+
+Ball FindBall::estimate3dCoords_3() {
+    cv::Mat img_with_edgePoints = cv::Mat::zeros(cv::Size(camera.width, camera.height),CV_8UC1);
+    for (int i = 0; i < edgePoints.size(); ++i) {
+        edgePoints[i].x *= scale;
+        edgePoints[i].y *= scale;
+    }
+    EdgeDetection edgeDetection(MIN_SIZE_OBJECT, MAX_SIZE_OBJECT);
+    img_with_edgePoints = edgeDetection.draw_points(img_with_edgePoints, edgePoints);
+//    cv::imshow("edgeDetection", img_with_edgePoints);
+//    cv::waitKey(0);
+
+    std::vector<Point> points = getContourPoints(img_with_edgePoints, 100);
+//    img_with_edgePoints = cv::Mat::zeros(cv::Size(camera.width, camera.height),CV_8UC1);
+//    img_with_edgePoints = edgeDetection.draw_points(img_with_edgePoints, points);
+//    cv::imshow("edgeDetection points", img_with_edgePoints);
+//    cv::waitKey(0);
+
+    std::vector<Vec3> edgeVectors;
+    for (const auto& pixel : points) {
+        Vec3 ray = pixelToRay(pixel.x, pixel.y);
+        edgeVectors.push_back(ray);
+    }
+//    std::cout << "3d вектора:" << std::endl;
+//    for (const auto& vec : edgeVectors) {
+//        std::cout << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]" << std::endl;
+//    }
+    Vec3 planeNormal = getNormalForPlane(edgeVectors);
+//    std::cout << "Нормаль: ("
+//              << planeNormal.x << ", " << planeNormal.y << ", " << planeNormal.z << ")\n";
+    double coneApexAngle = computeConeAngle(edgeVectors, planeNormal);
+//    std::cout << "Угол при вершине конуса: " << coneApexAngle << std::endl;
+    Vec3 Pc = calculateBallCenter13(planeNormal, coneApexAngle);
+    Ball ball = {Pc.x, Pc.y, Pc.z};
     return ball;
 }
 
 
-Ball FindBall::findBall(cv::Mat const & img) {
-    Ellipse ellipse = getEllipseParameters(img);
+// ----------------------------------- USEFUL FOR FIND BALL 2 and 4 ----------------------------------------------
 
-    Camera camera;
+Vec3 FindBall::calculateBallCenter2() {
+    double mean_R = (ellipse.R2 + ellipse.R1) / 2;
+    cv::Vec3d b_c_2d = {double(ellipse.x), double(ellipse.y), 1};
+    cv::Vec3d e_c_1_2d = {double(ellipse.x), double(ellipse.y - mean_R), 1};
+    cv::Vec3d e_c_2_2d = {double(ellipse.x), double(ellipse.y + mean_R), 1};
 
-    Ball ball = estimate3dCoords(ellipse, camera);
+    double m[3][3] = {{camera.fx, 0.0, camera.cx}, {0.0, camera.fy, camera.cy}, {0.0, 0.0, 1.0}};
+    cv::Mat K = cv::Mat(3, 3, CV_64F, m);
 
+    cv::Mat b_c = K.inv() * b_c_2d;
+    cv::Mat e_c_1 = K.inv() * e_c_1_2d;
+    cv::Mat e_c_2 = K.inv() * e_c_2_2d;
+
+    cv::Mat e_c = e_c_2 - e_c_1;
+
+    cv::Mat b = ((BALL_RADIUS * 2) * b_c) / e_c.at<double>(0, 1);
+    Vec3 ballCenter = {b.at<double>(0, 0), b.at<double>(0, 1), b.at<double>(0, 2)};
+    return ballCenter;
+}
+
+
+Vec3 FindBall::calculateBallCenter4(const std::vector<Point>& points) {
+    Point center(0, 0);
+    for (const auto& p : points) {
+        center.x += p.x;
+        center.y += p.y;
+    }
+    center.x /= points.size();
+    center.y /= points.size();
+    double mean_R = 0;
+    for (const auto& p : points) {
+        mean_R += std::sqrt(std::pow(p.x - center.x, 2) + std::pow(p.y - center.y, 2));
+    }
+    mean_R /= points.size();
+
+    cv::Vec3d b_c_2d = {double(center.x), double(center.y), 1};
+    cv::Vec3d e_c_1_2d = {double(center.x), double(center.y - mean_R), 1};
+    cv::Vec3d e_c_2_2d = {double(center.x), double(center.y + mean_R), 1};
+
+    double m[3][3] = {{camera.fx, 0.0, camera.cx}, {0.0, camera.fy, camera.cy}, {0.0, 0.0, 1.0}};
+    cv::Mat K = cv::Mat(3, 3, CV_64F, m);
+
+    cv::Mat b_c = K.inv() * b_c_2d;
+    cv::Mat e_c_1 = K.inv() * e_c_1_2d;
+    cv::Mat e_c_2 = K.inv() * e_c_2_2d;
+
+    cv::Mat e_c = e_c_2 - e_c_1;
+
+    cv::Mat b = ((BALL_RADIUS * 2) * b_c) / e_c.at<double>(0, 1);
+    Vec3 ballCenter = {b.at<double>(0, 0), b.at<double>(0, 1), b.at<double>(0, 2)};
+    return ballCenter;
+}
+
+
+// ----------------------------------- FIND BALL 2 ----------------------------------------------
+
+Ball FindBall::estimate3dCoords_2() {
+    Vec3 Pc = calculateBallCenter2();
+    Ball ball = {Pc.x, Pc.y, Pc.z};
+    return ball;
+}
+
+// ----------------------------------- FIND BALL 4 ----------------------------------------------
+
+
+Ball FindBall::estimate3dCoords_4() {
+    cv::Mat img_with_edgePoints = cv::Mat::zeros(cv::Size(camera.width, camera.height),CV_8UC1);
+    for (int i = 0; i < edgePoints.size(); ++i) {
+        edgePoints[i].x *= scale;
+        edgePoints[i].y *= scale;
+    }
+    EdgeDetection edgeDetection(MIN_SIZE_OBJECT, MAX_SIZE_OBJECT);
+    img_with_edgePoints = edgeDetection.draw_points(img_with_edgePoints, edgePoints);
+//    cv::imshow("edgeDetection", img_with_edgePoints);
+//    cv::waitKey(0);
+
+    std::vector<Point> points = getContourPoints(img_with_edgePoints, 3);
+//    img_with_edgePoints = cv::Mat::zeros(cv::Size(camera.width, camera.height),CV_8UC1);
+//    img_with_edgePoints = edgeDetection.draw_points(img_with_edgePoints, points);
+//    cv::imshow("edgeDetection points", img_with_edgePoints);
+//    cv::waitKey(0);
+
+    Vec3 Pc = calculateBallCenter4(points);
+    Ball ball = {Pc.x, Pc.y, Pc.z};
     return ball;
 }

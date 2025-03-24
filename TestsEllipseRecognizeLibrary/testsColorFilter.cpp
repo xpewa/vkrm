@@ -126,6 +126,9 @@ void testColorFilter(std::string path_test_img, std::string path_mask_img, std::
             cv::Mat img_real = cv::imread(path_mask_img + std::to_string(i) + ".png",cv::IMREAD_GRAYSCALE);
             cv::Mat img_res = colorFilter.recognize(img_test);
 
+//            cv::imshow("colorFilter", img_res);
+//            cv::waitKey(0);
+
             mean_distance += hammingDistance(img_res, img_real);
             mean_similarity_matchTemplate += compareMasksWithMatchTemplate(img_res, img_real);
             mean_similarity += compareMasks(img_res, img_real);
@@ -168,9 +171,21 @@ int main() {
     std::string type_img_experiment_1_video_1 = ".tiff";
     int count_img_experiment_1_video_1 = 18;
 
-    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
-    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
-    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1);
+    std::string path_test_img_experiment_synthetic = "../../Experiment_synthetic/Image_";
+    std::string path_mask_img_experiment_synthetic = "../../Experiment_synthetic/mask/Image_";
+    std::string type_img_experiment_synthetic = ".png";
+    int count_img_experiment_synthetic = 14;
+
+    std::string path_test_img_experiment_synthetic_2 = "../../Experiment_synthetic_2/Image_";
+    std::string path_mask_img_experiment_synthetic_2 = "../../Experiment_synthetic_2/mask/Image_";
+    std::string type_img_experiment_synthetic_2 = ".png";
+    int count_img_experiment_synthetic_2 = 230;
+
+//    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
+//    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
+//    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1);
+//    testColorFilter(path_test_img_experiment_synthetic, path_mask_img_experiment_synthetic, type_img_experiment_synthetic, count_img_experiment_synthetic);
+    testColorFilter(path_test_img_experiment_synthetic_2, path_mask_img_experiment_synthetic_2, type_img_experiment_synthetic_2, count_img_experiment_synthetic_2);
 
     return 0;
 }

@@ -46,6 +46,9 @@ public:
 class ColorFilter {
     Cylinder cylinder;
 
+    float __distance(const cv::Mat& pixel);
+    float __saturatedDistance(const cv::Mat& pixel, float channelValue, int channelIndex);
+
     cv::Mat __getArrayFromData(cv::Mat const& img, cv::Mat const& mask);
     cv::Mat __getArrayFromDataWithoutMask(const cv::Mat& img);
     Cylinder __getCylinder(cv::Mat const& pts);

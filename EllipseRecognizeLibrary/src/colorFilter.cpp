@@ -61,6 +61,8 @@ Cylinder ColorFilter::train(std::string path_img, std::string path_mask, std::st
 }
 
 cv::Mat ColorFilter::recognize(cv::Mat const& img) { // img.type() == CV_8UC3
+//    auto start = std::chrono::high_resolution_clock::now();
+
     int Ny = img.rows;
     int Nx = img.cols;
     cv::Mat p = __getArrayFromDataWithoutMask(img);
@@ -81,8 +83,6 @@ cv::Mat ColorFilter::recognize(cv::Mat const& img) { // img.type() == CV_8UC3
 //    float R = dp.at<float>(round((dp.rows - 1) * 0.5), 0);
     dp = cv::max(dp - cylinder.R * cv::Mat::ones(dp.rows, 1, CV_32F), 0);
 
-    auto start = std::chrono::high_resolution_clock::now();
-
     cv::Mat d;
     d = dp + dt;
     d = d.reshape(1, Ny);
@@ -99,13 +99,13 @@ cv::Mat ColorFilter::recognize(cv::Mat const& img) { // img.type() == CV_8UC3
         }
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//    auto end = std::chrono::high_resolution_clock::now();
+//    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 //    std::cout << "Время: " << duration.count() << " microseconds" << std::endl;
 
     return mask;
 }
+
 
 Cylinder ColorFilter::__getCylinder(cv::Mat const& pts) {
     cv::Mat data = __ransac(pts);
@@ -135,7 +135,7 @@ Cylinder ColorFilter::__getCylinder(cv::Mat const& pts) {
     cv::Mat dp;
     sqrt(A.mul(A)*cv::Mat::ones(3, 1, CV_32F), dp);
     cv::sort(dp, dp, cv::SORT_EVERY_COLUMN);
-    f.R = dp.at<float>(round((dp.rows - 1) * 0.4), 0); // radius
+    f.R = dp.at<float>(round((dp.rows - 1) * 0.4), 0); // radius 0.4
 //    std::cout << "R " << f.R << std::endl;
 
     this->cylinder = f;

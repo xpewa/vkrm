@@ -88,22 +88,22 @@ Ellipse DetectEllipse::__mnk(std::vector<Point> const& pts) {
     return ellipse;
 }
 
-double __findMode(const std::vector<double>& arr, double range_min = 0, double bin_size = 0.001) {
-    std::map<int, int> frequencyMap;
-    for (double num : arr) {
-        int bin = static_cast<int>((num - range_min) / bin_size);
-        frequencyMap[bin]++;
-    }
-    int mode_bin = frequencyMap.begin()->first;
-    int maxFrequency = frequencyMap.begin()->second;
-    for (const auto& pair : frequencyMap) {
-        if (pair.second > maxFrequency) {
-            maxFrequency = pair.second;
-            mode_bin = pair.first;
-        }
-    }
-    return range_min + (mode_bin + 0.5) * bin_size;
-}
+//double __findMode(const std::vector<double>& arr, double range_min = 0, double bin_size = 0.001) {
+//    std::map<int, int> frequencyMap;
+//    for (double num : arr) {
+//        int bin = static_cast<int>((num - range_min) / bin_size);
+//        frequencyMap[bin]++;
+//    }
+//    int mode_bin = frequencyMap.begin()->first;
+//    int maxFrequency = frequencyMap.begin()->second;
+//    for (const auto& pair : frequencyMap) {
+//        if (pair.second > maxFrequency) {
+//            maxFrequency = pair.second;
+//            mode_bin = pair.first;
+//        }
+//    }
+//    return range_min + (mode_bin + 0.5) * bin_size;
+//}
 
 Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 2
     Ellipse ellipse;
@@ -126,7 +126,6 @@ Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 
     int count_pts = pts.size();
     cv::Mat center = cv::Mat::zeros(maxSize + 10, maxSize + 10, CV_8U); // img size
     std::vector<double> angle_array, R1_array, R2_array;
-
 
     int maxIterations = 100;
     for (int i = 0; i < maxIterations; ++i) {
@@ -165,11 +164,21 @@ Ellipse DetectEllipse::detectEllipse(std::vector<Point> const& pts) { // rows x 
     cv::Point maxLoc;
     minMaxLoc(center, &minVal, &maxVal, &minLoc, &maxLoc);
 
+    std::sort(angle_array.begin(), angle_array.end());
+    std::sort(R1_array.begin(), R1_array.end());
+    std::sort(R2_array.begin(), R2_array.end());
+
     ellipse.x = maxLoc.x;
     ellipse.y = maxLoc.y;
-    ellipse.angle = __findMode(angle_array, -1, 1e-3);
-    ellipse.R1 = __findMode(R1_array, 0, 1e-2);
-    ellipse.R2 = __findMode(R2_array, 0, 1e-2);
+//    ellipse.angle = __findMode(angle_array, -1, 1e-3);
+//    ellipse.R1 = __findMode(R1_array, 0, 1e-2);
+//    ellipse.R2 = __findMode(R2_array, 0, 1e-2);
+//    ellipse.angle = angle_array[int(angle_array.size() / 2)];
+//    ellipse.R1 = R1_array[int(R1_array.size() / 2)];
+//    ellipse.R2 = R2_array[int(R2_array.size() / 2)];
+    ellipse.angle = angle_array[int(angle_array.size() / 2)];
+    ellipse.R1 = R1_array[0];
+    ellipse.R2 = R2_array[R2_array.size() - 1];
 
     auto end = std::chrono::high_resolution_clock::now();
 

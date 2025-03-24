@@ -163,7 +163,7 @@ std::vector<Point> EdgeDetection::__PrevittOperatorOptimized(const cv::Mat& img)
     for (int y = 10; y < rows - 10; ++y) {
         for (int x = 10; x < cols - 10; ++x) {
             if (Hp.at<int>(y, x) > 10000000 || Hp.at<int>(y, x) < -10000000) {
-                points.emplace_back(x, y); // emplace_back эффективнее, чем push_back
+                points.emplace_back(x, y);
             }
         }
     }
@@ -172,8 +172,8 @@ std::vector<Point> EdgeDetection::__PrevittOperatorOptimized(const cv::Mat& img)
 }
 
 cv::Mat EdgeDetection::__fillBlank(cv::Mat const & img) {
-    int sizeRange1 = 10;
-    int sizeRange2 = 10;
+    int sizeRange1 = 3;
+    int sizeRange2 = 3;
     cv::Mat new_img2 = img.clone();
     for (int y = sizeRange2; y < img.rows - sizeRange2 - 1; ++y) {
         for (int x = sizeRange2; x < img.cols - sizeRange2 - 1; ++x) {
@@ -213,16 +213,12 @@ std::vector<Point> EdgeDetection::find_points(cv::Mat const & src) {
     cv::Mat img = src.clone();
 
 //    img = __GaussianBlur(img);
-//    for (int i = 0; i < 10; ++i) {
+//    for (int i = 0; i < 1; ++i) {
 //        img = __GaussianBlur(img);
 //    }
 
     std::vector<Contour> contours = __findContours(img);
 //    std::cout << "Count contours1 = " << contours1.size() << std::endl;
-
-//    img = __fillBlank(img);
-//    cv::imshow("__fillBlank", img);
-//    cv::waitKey(0);
 
 //    std::vector<Contour> contours2 = __findContours(img);
 //    std::cout << "Count contours2 = " << contours2.size() << std::endl;
@@ -258,8 +254,13 @@ std::vector<Point> EdgeDetection::find_points(cv::Mat const & src) {
 
     Contour max_contour = __filterMaxContour(contours);
 
-    cv::Mat clear_img = cv::Mat::zeros(cv::Size(img.cols, img.rows),CV_8UC1);
-    img = draw_points(clear_img, max_contour.pixels);
+//    cv::Mat clear_img = cv::Mat::zeros(cv::Size(img.cols, img.rows),CV_8UC1);
+//    img = draw_points(clear_img, max_contour.pixels);
+
+//    img = __fillBlank(img);
+//    cv::imshow("__fillBlank", img);
+//    cv::waitKey(0);
+
 //    cv::imshow("max_contour", img);
 //    cv::waitKey(0);
 
