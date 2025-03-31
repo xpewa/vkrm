@@ -114,14 +114,16 @@ void Camera::computeCameraExtrinsics() {
 Ball FindBall::findBall(cv::Mat const & img) {
 //    cv::imshow("initial img", img);
 //    cv::waitKey(0);
-    Ellipse ellipse = getEllipseParameters(img);
+    Ellipse _ellipse = getEllipseParameters(img);
     Camera camera;
     Ball ball;
     auto start = std::chrono::high_resolution_clock::now();
+    ellipse.R1 *= 0.91;
+    ellipse.R2 *= 0.91;
     ball = estimate3dCoords_1();
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-//    std::cout << "Среднее время обработки изображения: " << duration.count() << " microseconds" << std::endl;
+//    std::cout << "Среднее время обработки изображения estimate3dCoords_1: " << duration.count() << " microseconds" << std::endl;
 //    std::cout << "distance in mm: " << 50 * 120 / (ellipse.R1 * 0.025 ) << std::endl;
     return ball;
 }
@@ -162,6 +164,44 @@ std::vector<Point> FindBall::get2DPointsFromEllipse(int numPoints) {
 }
 
 
+Vec3 findNormalLeastSquares(const std::vector<Vec3>& points) {
+    if (points.size() < 3) {
+        std::cerr << "findNormalLeastSquares: Недостаточно точек для определения плоскости" << std::endl;
+        return {0.0, 0.0, 0.0};
+    }
+    Eigen::Vector3d centroid(0.0, 0.0, 0.0);
+    for (const auto& p : points) {
+        centroid(0) += p.x;
+        centroid(1) += p.y;
+        centroid(2) += p.z;
+    }
+    centroid /= points.size();
+    Eigen::MatrixXd A(points.size(), 3);
+    for (size_t i = 0; i < points.size(); ++i) {
+        A(i, 0) = points[i].x - centroid(0);
+        A(i, 1) = points[i].y - centroid(1);
+        A(i, 2) = points[i].z - centroid(2);
+    }
+    Eigen::Matrix3d C = A.transpose() * A;
+    Eigen::EigenSolver<Eigen::Matrix3d> eigenSolver(C);
+    Eigen::Vector3d eigenvalues = eigenSolver.eigenvalues().real();
+    Eigen::Matrix3d eigenvectors = eigenSolver.eigenvectors().real();
+    int minEigenvalueIndex = 0;
+    for (int i = 1; i < 3; ++i) {
+        if (eigenvalues(i) < eigenvalues(minEigenvalueIndex)) {
+            minEigenvalueIndex = i;
+        }
+    }
+    Eigen::Vector3d normalEigen = eigenvectors.col(minEigenvalueIndex);
+    Eigen::Vector3d normalEigenNormalized = normalEigen.normalized();
+    Vec3 normal;
+    normal.x = normalEigenNormalized(0);
+    normal.y = normalEigenNormalized(1);
+    normal.z = normalEigenNormalized(2);
+    return normal;
+}
+
+
 Vec3 findNormalFromThreePoints(const Vec3& p1, const Vec3& p2, const Vec3& p3) {
     Vec3 v1 = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
     Vec3 v2 = {p3.x - p1.x, p3.y - p1.y, p3.z - p1.z};
@@ -171,7 +211,7 @@ Vec3 findNormalFromThreePoints(const Vec3& p1, const Vec3& p2, const Vec3& p3) {
 
 
 Vec3 FindBall::getNormalForPlane(const std::vector<Vec3>& points) {
-    int count_random = 100;
+    int count_random = 100000;
 
     Vec3 averageNormal = {0.0, 0.0, 0.0};
     std::random_device rd;
@@ -335,7 +375,7 @@ Ball FindBall::estimate3dCoords_1() {
 //        std::cout << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]" << std::endl;
 //    }
 
-    Vec3 planeNormal = getNormalForPlane(edgeVectors);
+    Vec3 planeNormal = findNormalFromThreePoints(edgeVectors[0], edgeVectors[1], edgeVectors[2]);
 //    std::cout << "Нормаль: ("
 //              << planeNormal.x << ", " << planeNormal.y << ", " << planeNormal.z << ")\n";
 
@@ -377,7 +417,8 @@ Ball FindBall::estimate3dCoords_3() {
 //    for (const auto& vec : edgeVectors) {
 //        std::cout << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]" << std::endl;
 //    }
-    Vec3 planeNormal = getNormalForPlane(edgeVectors);
+//    Vec3 planeNormal = getNormalForPlane(edgeVectors);
+    Vec3 planeNormal = findNormalLeastSquares(edgeVectors);
 //    std::cout << "Нормаль: ("
 //              << planeNormal.x << ", " << planeNormal.y << ", " << planeNormal.z << ")\n";
     double coneApexAngle = computeConeAngle(edgeVectors, planeNormal);

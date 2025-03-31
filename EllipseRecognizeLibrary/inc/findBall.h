@@ -7,6 +7,7 @@
 #include "edgeDetection.h"
 #include "detectEllipse.h"
 #include "colorFilter.h"
+#include <eigen3/Eigen/Dense>
 
 
 struct Vec3 {
@@ -83,6 +84,10 @@ public:
 class Ball {
 public:
     double x, y, z;
+
+    friend std::ostream& operator<<(std::ostream& out, const Ball& b){
+        return out << "Ball: " << b.x << " " << b.y << " " << b.z << std::endl;
+    }
 };
 
 
@@ -92,7 +97,7 @@ class FindBall {
     Ellipse ellipse;
     std::vector<Point> edgePoints;
     double BALL_RADIUS = 0.12; // метры 0.146 0.24
-    const int scale = 4;
+    const int scale = 8;
     int MIN_SIZE_OBJECT = 100 / (scale*scale); // diameter = 100 (3 m) 7500
     int MAX_SIZE_OBJECT = 100000000 / (scale*scale); // diameter = 300 (1 m) 750000
 

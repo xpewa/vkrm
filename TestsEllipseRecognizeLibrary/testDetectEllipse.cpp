@@ -166,6 +166,11 @@ int main() {
     std::string type_img_experiment_1_video_1 = ".tiff";
     int count_img_experiment_1_video_1 = 18;
 
+    std::string path_ellipse_centers_experiment_synthetic = "../../Experiment_synthetic_2/ball_center.txt";
+    std::string path_test_img_experiment_synthetic = "../../Experiment_synthetic_2/Image_";
+    std::string type_img_experiment_synthetic = ".png";
+    int count_img_experiment_synthetic = 660;
+
     testDetectEllipseExperiment(path_ellipse_centers_experiment_1,
                                 path_test_img_experiment_1,
                                 type_img_experiment_1,
@@ -182,6 +187,11 @@ int main() {
                                 path_test_img_experiment_1_video_1,
                                 type_img_experiment_1_video_1,
                                 count_img_experiment_1_video_1);
+
+    testDetectEllipseExperiment(path_ellipse_centers_experiment_synthetic,
+                                path_test_img_experiment_synthetic,
+                                type_img_experiment_synthetic,
+                                count_img_experiment_synthetic);
 
     return 0;
 }

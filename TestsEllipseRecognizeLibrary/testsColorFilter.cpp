@@ -5,8 +5,22 @@
 
 #include "colorFilter.h"
 
-std::string PATH = "../../Experiment1/Image_";
+//std::string PATH = "../../Experiment1/Image_";
 std::string PATH_CYLINDER = "../../cylinder.txt";
+std::string PATH = "../../Experiment_synthetic_2/Image_";
+std::string PATH_MASK = "../../Experiment_synthetic_2/mask/Image_";
+
+
+void convertGrayToWhite(cv::Mat& image) {
+    for (int y = 0; y < image.rows; ++y) {
+        for (int x = 0; x < image.cols; ++x) {
+            uchar pixelValue = image.at<uchar>(y, x);
+            if (pixelValue > 128) {
+                image.at<uchar>(y, x) = 255;
+            }
+        }
+    }
+}
 
 
 int hammingDistance(const cv::Mat& mask1, const cv::Mat& mask2) {
@@ -110,7 +124,7 @@ void testColorFilter(std::string path_test_img, std::string path_mask_img, std::
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(PATH, PATH, ".bmp", ".png", count_img);
+        cylinder = colorFilter.train(PATH, PATH_MASK, ".png", ".png", count_img);
         cylinder.save(PATH_CYLINDER);
     }
 
@@ -124,8 +138,11 @@ void testColorFilter(std::string path_test_img, std::string path_mask_img, std::
         for (int i = 1; i < count_img + 1; ++i) {
             cv::Mat img_test = cv::imread(path_test_img + std::to_string(i) + type_img);
             cv::Mat img_real = cv::imread(path_mask_img + std::to_string(i) + ".png",cv::IMREAD_GRAYSCALE);
+            convertGrayToWhite(img_real);
             cv::Mat img_res = colorFilter.recognize(img_test);
 
+//            cv::imshow("img_real", img_real);
+//            cv::waitKey(0);
 //            cv::imshow("colorFilter", img_res);
 //            cv::waitKey(0);
 
@@ -179,7 +196,7 @@ int main() {
     std::string path_test_img_experiment_synthetic_2 = "../../Experiment_synthetic_2/Image_";
     std::string path_mask_img_experiment_synthetic_2 = "../../Experiment_synthetic_2/mask/Image_";
     std::string type_img_experiment_synthetic_2 = ".png";
-    int count_img_experiment_synthetic_2 = 230;
+    int count_img_experiment_synthetic_2 = 660;
 
 //    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
 //    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);

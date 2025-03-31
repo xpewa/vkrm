@@ -69,7 +69,7 @@ cv::Mat ColorFilter::recognize(cv::Mat const& img) { // img.type() == CV_8UC3
 
     cv::Mat mean;
 //    mean = cv::Mat::ones(p.rows, 1, CV_32F) * cylinder.p0;
-    cv::repeat(cylinder.p0, p.rows, 1, mean); // Долго (4 ms)
+    cv::repeat(cylinder.p0, p.rows, 1, mean);
 
     cv::Mat p_p0 = p - mean; // 2 ms
     cv::Mat t = (p_p0) * cylinder.v.t(); // 2 ms
