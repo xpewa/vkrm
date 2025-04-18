@@ -4,6 +4,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
+
 struct Point {
     Point (int x, int y) : x(x), y(y) {}
     Point () {}
@@ -39,9 +40,9 @@ public:
     cv::Mat __GaussianBlur(cv::Mat const & img);
     std::vector<Point> __PrevittOperator(cv::Mat const & img);
     cv::Mat __fillBlank(cv::Mat const & img);
+
     std::vector<Point> find_points(cv::Mat const & src);
     cv::Mat draw_points(cv::Mat const & img, std::vector<Point> const & points);
-    std::vector<Point> __PrevittOperatorOptimized(const cv::Mat& img);
 
     EdgeDetection(int min_size_object = 100, int max_size_object = 100000000)
     : min_size_object(min_size_object), max_size_object(max_size_object) {}

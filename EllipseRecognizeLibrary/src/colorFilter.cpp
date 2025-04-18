@@ -41,38 +41,29 @@ Cylinder ColorFilter::train(std::string path_img, std::string path_mask, std::st
     for (int i = 1; i < countImg + 1; ++i) {
         img[i] = cv::imread(path_img + std::to_string(i) + type_img);
         img_mask[i] = cv::imread(path_mask + std::to_string(i) + type_mask,cv::IMREAD_GRAYSCALE);
-//        resize(img[i], img[i], cv::Size(500, 500), cv::INTER_LINEAR);
-//        resize(img_mask[i], img_mask[i], cv::Size(500, 500), cv::INTER_LINEAR);
     }
 
     std::vector<cv::Mat> data(countImg + 1);
-
     for (int i = 1; i < countImg + 1; ++i) {
         data[i] = __getArrayFromData(img[i], img_mask[i]);
     }
-
     cv::Mat data_train;
-
     for (int i = 1; i < countImg + 1; ++i) {
         data_train.push_back(data[i]);
     }
-
     return __getCylinder(data_train);
 }
 
 cv::Mat ColorFilter::recognize(cv::Mat const& img) { // img.type() == CV_8UC3
-//    auto start = std::chrono::high_resolution_clock::now();
-
     int Ny = img.rows;
     int Nx = img.cols;
     cv::Mat p = __getArrayFromDataWithoutMask(img);
 
     cv::Mat mean;
-//    mean = cv::Mat::ones(p.rows, 1, CV_32F) * cylinder.p0;
     cv::repeat(cylinder.p0, p.rows, 1, mean);
 
-    cv::Mat p_p0 = p - mean; // 2 ms
-    cv::Mat t = (p_p0) * cylinder.v.t(); // 2 ms
+    cv::Mat p_p0 = p - mean;
+    cv::Mat t = (p_p0) * cylinder.v.t();
 
     cv::Mat dt = abs(t - (cylinder.t1 + cylinder.t2) / 2) - (cylinder.t2 - cylinder.t1) / 2;
     dt = cv::max(dt, 0);
@@ -80,7 +71,6 @@ cv::Mat ColorFilter::recognize(cv::Mat const& img) { // img.type() == CV_8UC3
     cv::Mat A = t * cylinder.v + mean - p;
     cv::Mat dp;
     sqrt(A.mul(A)*cv::Mat::ones(3, 1, CV_32F), dp);
-//    float R = dp.at<float>(round((dp.rows - 1) * 0.5), 0);
     dp = cv::max(dp - cylinder.R * cv::Mat::ones(dp.rows, 1, CV_32F), 0);
 
     cv::Mat d;
@@ -98,10 +88,6 @@ cv::Mat ColorFilter::recognize(cv::Mat const& img) { // img.type() == CV_8UC3
             }
         }
     }
-
-//    auto end = std::chrono::high_resolution_clock::now();
-//    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-//    std::cout << "Время: " << duration.count() << " microseconds" << std::endl;
 
     return mask;
 }
@@ -128,23 +114,17 @@ Cylinder ColorFilter::__getCylinder(cv::Mat const& pts) {
     cv::Mat t = (p_p0) * f.v.t();
     cv::sort(t, t, cv::SORT_EVERY_COLUMN);
 
-    f.t1 = t.at<float>(round(t.rows * 0.05), 0);
-    f.t2 = t.at<float>(round((t.rows - 1) * 0.95), 0);
+    f.t1 = t.at<float>(round(t.rows * 0.01), 0); // 0.05
+    f.t2 = t.at<float>(round((t.rows - 1) * 0.99), 0); // 0.95
 
     cv::Mat A = t * f.v + mean - data;
     cv::Mat dp;
     sqrt(A.mul(A)*cv::Mat::ones(3, 1, CV_32F), dp);
     cv::sort(dp, dp, cv::SORT_EVERY_COLUMN);
-    f.R = dp.at<float>(round((dp.rows - 1) * 0.4), 0); // radius 0.4
-//    std::cout << "R " << f.R << std::endl;
+    f.R = dp.at<float>(round((dp.rows - 1) * 0.25), 0); // radius 0.4
 
     this->cylinder = f;
     return f;
-}
-
-
-double ColorFilter::__calculateDistancePointPoint(cv::Vec3b const& p1, cv::Vec3b const& p2) {
-    return sqrt(pow(p1[0] - p2[0], 2) + pow(p1[1] - p2[1], 2) + pow(p1[2] - p2[2], 2));
 }
 
 
@@ -172,10 +152,9 @@ cv::Mat ColorFilter::__ransac(cv::Mat const& pts) {
 
     cv::Mat bestInliers = cv::Mat(0, 1, CV_32FC3);
     int maxIterations = 100;
-    double threshold = 70000.0; // 70000
+    double threshold = 70000.0;
 
     for (int i = 0; i < maxIterations; ++i) {
-        // Выбираем две случайные точки
         int index1 = rand() % (count_pts);
         int index2 = rand() % (count_pts);
         cv::Vec3b p1 = pts.row(index1);
@@ -194,7 +173,6 @@ cv::Mat ColorFilter::__ransac(cv::Mat const& pts) {
             }
         }
 
-        // Если найдено больше инлаеров, чем в предыдущей итерации
         if (inliers.rows > bestInliers.rows) {
             bestInliers = inliers;
         }

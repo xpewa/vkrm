@@ -6,6 +6,14 @@
 #include <opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
 
+
+struct Distance {
+    double distance;
+    double angle;
+    int index;
+};
+
+
 class Ellipse {
 public:
     int x, y;
@@ -19,6 +27,8 @@ class DetectEllipse {
     Ellipse __mnk(std::vector<Point> const& pts);
 public:
     Ellipse detectEllipse(std::vector<Point> const& pts);
+    Ellipse detectEllipse_2(std::vector<Point> const& pts);
+    Ellipse detectEllipse_3(std::vector<Point> const& pts);
 };
 
 #endif //VKRM_DETECTELLIPSE_H

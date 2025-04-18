@@ -16,7 +16,7 @@
 #include "detectEllipse.h"
 #include "findBall.h"
 
-//std::string PATH_CYLINDER = "../../cylinder.txt";
+const std::string PATH_CYLINDER = "../../cylinder.txt";
 
 std::vector<Ellipse> readCentersFromFile(const std::string& filename);
 

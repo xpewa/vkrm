@@ -6,7 +6,6 @@
 namespace fs = std::filesystem;
 
 #include "colorFilter.h"
-#include "contous.h"
 #include "edgeDetection.h"
 #include "detectEllipse.h"
 #include "videoRecognize.h"
@@ -25,7 +24,7 @@ std::string PATH_IMAGE_TEST = "../../Experiment1/Image_45.bmp"; // 16, 45
 std::string PATH_VIDEO = "../../Experiment1/video1/video_1_mp4/video1.mp4";
 //std::string PATH_OUT_VIDEO = "../../videos/outVideo.mp4";
 std::string PATH_OUT_VIDEO = "../../Experiment1/video1/video_1_mp4/out_video_1.mp4";
-std::string PATH_CYLINDER = "../../cylinder.txt";
+std::string _PATH_CYLINDER = "../../cylinder.txt";
 int COUNT_FILER_IMG = 59;
 
 void draw_ellipse(cv::Mat & img, Ellipse const & ellipse) {
@@ -43,9 +42,9 @@ int main(int argc, char const* argv[]) {
 //     Color Filter
     ColorFilter colorFilter1;
     Cylinder cylinder = colorFilter1.train(PATH, PATH, ".bmp", ".png", COUNT_FILER_IMG);
-    cylinder.save(PATH_CYLINDER);
+    cylinder.save(_PATH_CYLINDER);
 //    Cylinder cylinder;
-    cylinder.load(PATH_CYLINDER);
+    cylinder.load(_PATH_CYLINDER);
     ColorFilter colorFilter(cylinder);
     std::cout << "Cylinder R = " << cylinder.R << std::endl;
     std::cout << "Cylinder v = " << cylinder.v << std::endl;

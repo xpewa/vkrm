@@ -49,7 +49,8 @@ class Camera {
     void computeCameraExtrinsics();
 public:
     double focal_length_mm = 50.0;
-    double sensor_size_mm = 36.0;
+    double sensor_width_size_mm = 36.0;
+    double sensor_height_size_mm = 24.0;
     int width = 1280;
     int height = 1024;
 
@@ -62,8 +63,8 @@ public:
 
     double k1, k2, k3, p1, p2 = 0;
 
-    double fx = (focal_length_mm / sensor_size_mm) * width;
-    double fy = (focal_length_mm / sensor_size_mm) * height;
+    double fx = (focal_length_mm / sensor_width_size_mm) * width;
+    double fy = (focal_length_mm / sensor_height_size_mm) * height;
     double cx = width / 2;
     double cy = height / 2;
 
@@ -96,8 +97,8 @@ class FindBall {
     Camera camera;
     Ellipse ellipse;
     std::vector<Point> edgePoints;
-    double BALL_RADIUS = 0.12; // метры 0.146 0.24
-    const int scale = 8;
+    double BALL_RADIUS = 0.12; // метры
+    const int scale = 4;
     int MIN_SIZE_OBJECT = 100 / (scale*scale); // diameter = 100 (3 m) 7500
     int MAX_SIZE_OBJECT = 100000000 / (scale*scale); // diameter = 300 (1 m) 750000
 

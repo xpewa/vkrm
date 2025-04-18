@@ -1,11 +1,5 @@
 #include "testCommon.h"
 
-std::string PATH_CYLINDER = "../../cylinder.txt";
-std::string PATH = "../../Experiment_synthetic_2/Image_";
-std::string PATH_MASK = "../../Experiment_synthetic_2/mask/Image_";
-//std::string PATH = "../../Experiment1/Image_";
-//std::string PATH_MASK = "../../Experiment1/Image_";
-
 
 std::vector<Ball> readGroundTruthFromFile(const std::string& filename, int count_img) {
     std::vector<Ball> groundTruth;
@@ -84,7 +78,8 @@ Ball calculateMinError(const std::vector<Ball>& predicted, const std::vector<Bal
 }
 
 
-void testFindBallExperiment(std::string path_ellipse_centers, std::string path_ball_positions, std::string path_test_img, std::string type_img, int count_img) {
+void testFindBallExperiment(const std::string& path_ellipse_centers, const std::string& path_ball_positions, const std::string& path_test_img, const std::string& type_img, int count_img,
+                            const std::string& path_to_data_for_cylinder, const std::string& path_to_mask_for_cylinder, const std::string& type_img_for_cylinder, const std::string& type_mask_for_cylinder) {
     std::vector<Ellipse> real_centers = readCentersFromFile(path_ellipse_centers);
     std::vector<Ellipse> predict_centers;
     std::vector<Ball> ball_array;
@@ -98,7 +93,7 @@ void testFindBallExperiment(std::string path_ellipse_centers, std::string path_b
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(PATH, PATH_MASK, ".png", ".png", count_img);
+        cylinder = colorFilter.train(path_to_data_for_cylinder, path_to_mask_for_cylinder, type_img_for_cylinder, type_mask_for_cylinder, count_img);
         cylinder.save(PATH_CYLINDER);
     }
     FindBall findBall(colorFilter);
@@ -111,13 +106,10 @@ void testFindBallExperiment(std::string path_ellipse_centers, std::string path_b
 
         auto start = std::chrono::high_resolution_clock::now();
 
-        Ellipse ellipse = findBall.getEllipseParameters(img_test);
-
         Ball ball = findBall.findBall(img_test);
 
         auto end = std::chrono::high_resolution_clock::now();
 
-        predict_centers.push_back(ellipse);
         ball_array.push_back(ball);
 
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -128,10 +120,7 @@ void testFindBallExperiment(std::string path_ellipse_centers, std::string path_b
     std::cout << "Среднее время обработки изображения: " << averageTime << " microseconds" << std::endl;
 
 //    for (int i = 0; i < ball_array.size(); ++i) {
-//        std::cout << ball_array[i] << std::endl;
-//    }
-//    for (int i = 0; i < real_ball.size(); ++i) {
-//        std::cout << real_ball[i] << std::endl;
+//        std::cout << abs(ball_array[i].x) - abs(real_ball[i].x) << " " << abs(ball_array[i].y) - abs(real_ball[i].y) << " " << abs(ball_array[i].z) - abs(real_ball[i].z)  << std::endl;
 //    }
 
     Ball MAE = calculateMAE(ball_array, real_ball);
@@ -144,7 +133,8 @@ void testFindBallExperiment(std::string path_ellipse_centers, std::string path_b
 }
 
 
-void testFindBallExperimentReal(std::string path_ellipse_centers, std::string path_test_img, std::string type_img, int count_img) {
+void testFindBallExperimentReal(std::string path_ellipse_centers, std::string path_test_img, std::string type_img, int count_img,
+                                const std::string& path_to_data_for_cylinder, const std::string& path_to_mask_for_cylinder, const std::string& type_img_for_cylinder, const std::string& type_mask_for_cylinder) {
     std::vector<Ellipse> real_centers = readCentersFromFile(path_ellipse_centers);
     std::vector<Ellipse> predict_centers;
     std::vector<Ball> ball_array;
@@ -156,7 +146,7 @@ void testFindBallExperimentReal(std::string path_ellipse_centers, std::string pa
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(PATH, PATH_MASK, ".png", ".png", count_img);
+        cylinder = colorFilter.train(path_to_data_for_cylinder, path_to_mask_for_cylinder, type_img_for_cylinder, type_mask_for_cylinder, count_img);
         cylinder.save(PATH_CYLINDER);
     }
     FindBall findBall(colorFilter);
@@ -167,13 +157,10 @@ void testFindBallExperimentReal(std::string path_ellipse_centers, std::string pa
 
         auto start = std::chrono::high_resolution_clock::now();
 
-//        Ellipse ellipse = findBall.getEllipseParameters(img_test);
-
         Ball ball = findBall.findBall(img_test);
 
         auto end = std::chrono::high_resolution_clock::now();
 
-//        predict_centers.push_back(ellipse);
         ball_array.push_back(ball);
 
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -183,9 +170,6 @@ void testFindBallExperimentReal(std::string path_ellipse_centers, std::string pa
     double averageTime = accumulate(times.begin(), times.end(), 0.0) / times.size();
     std::cout << "Среднее время обработки изображения: " << averageTime << " microseconds" << std::endl;
 
-//    for (int i = 0; i < predict_centers.size(); ++i) {
-//        std::cout << "predict_centers " << i << ": " << predict_centers[i].x << " " << predict_centers[i].y << std::endl;
-//    }
     for (int i = 0; i < ball_array.size(); ++i) {
         std::cout << "ball_array " << i << ": " << ball_array[i].x << " " << ball_array[i].y << " " << ball_array[i].z << std::endl;
     }
@@ -204,11 +188,16 @@ int main() {
     std::string path_test_img_experiment_1 = "../../Experiment1/Image_";
     std::string path_mask_img_experiment_1 = "../../Experiment1/mask/Image_";
     std::string type_img_experiment_1 = ".bmp";
-    int count_img_experiment_1 = 59;
+    int count_img_experiment_1 = 59; // 59
 
+    std::string path_data_experiment_1 = "../../Experiment1/Image_";
+    std::string path_data_img_synthetic = "../../Experiment_synthetic_2/Image_";
+    std::string path_data_mask_synthetic = "../../Experiment_synthetic_2/mask/Image_";
 
-    testFindBallExperiment(path_ellipse_centers_experiment_synthetic, path_ball_positions_experiment_synthetic, path_test_img_experiment_synthetic, type_img_experiment_synthetic, count_img_experiment_synthetic);
-//    testFindBallExperimentReal(path_ellipse_centers_experiment_1, path_test_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
+    testFindBallExperiment(path_ellipse_centers_experiment_synthetic, path_ball_positions_experiment_synthetic, path_test_img_experiment_synthetic, type_img_experiment_synthetic, count_img_experiment_synthetic,
+                           path_data_img_synthetic, path_data_mask_synthetic, type_img_experiment_synthetic, type_img_experiment_synthetic);
+//    testFindBallExperimentReal(path_ellipse_centers_experiment_1, path_test_img_experiment_1, type_img_experiment_1, count_img_experiment_1,
+//                               path_data_experiment_1, path_data_experiment_1, type_img_experiment_1, ".png");
 
     return 0;
 }

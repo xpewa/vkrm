@@ -29,7 +29,6 @@ public:
     }
 
     bool load(const std::string& filename) {
-//        std::cout << "I`m loading Cylinder" << std::endl;
         std::ifstream file(filename, std::ios::binary);
         if (!file.is_open()) return false;
 
@@ -46,21 +45,16 @@ public:
 class ColorFilter {
     Cylinder cylinder;
 
-    float __distance(const cv::Mat& pixel);
-    float __saturatedDistance(const cv::Mat& pixel, float channelValue, int channelIndex);
-
     cv::Mat __getArrayFromData(cv::Mat const& img, cv::Mat const& mask);
     cv::Mat __getArrayFromDataWithoutMask(const cv::Mat& img);
     Cylinder __getCylinder(cv::Mat const& pts);
     cv::Mat __ransac(cv::Mat const& pts);
-    double __calculateDistancePointPoint(cv::Vec3b const& p1, cv::Vec3b const& p2);
     double __calculateDistancePointLine(cv::Vec3b const& pl1, cv::Vec3b const& pl2, cv::Vec3b const& point);
 public:
     ColorFilter() {}
     ColorFilter(Cylinder cylinder) : cylinder(cylinder) {}
     Cylinder train(std::string path_img, std::string path_mask, std::string type_img, std::string type_mask, int countImg);
     cv::Mat recognize(cv::Mat const& img);
-
 };
 
 #endif //VKRM_COLORFILTER_H

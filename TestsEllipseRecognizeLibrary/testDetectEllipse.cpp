@@ -6,9 +6,6 @@
 #include "testCommon.h"
 
 
-std::string PATH = "../../Experiment1/Image_";
-std::string PATH_CYLINDER = "../../cylinder.txt";
-
 void showHistogram(const std::vector<double>& data, const std::string& windowName, int numBins = 10) {
     if (data.empty()) {
         std::cout << "No data to display." << std::endl;
@@ -26,7 +23,7 @@ void showHistogram(const std::vector<double>& data, const std::string& windowNam
     }
     int histHeight = 800;
     int histWidth = 1200;
-    int textMargin = 20; // Margin for axis labels
+    int textMargin = 20;
     cv::Mat histImage(histHeight + 2 * textMargin, histWidth + 2* textMargin, CV_8UC3, cv::Scalar(255, 255, 255));
     int maxBinCount = *std::max_element(bins.begin(), bins.end());
     if (maxBinCount == 0) maxBinCount = 1;
@@ -57,7 +54,7 @@ double calculateError(const Ellipse & real, const Ellipse & predicted) {
 void calculateMetrics(const std::vector<Ellipse>& real_coords, const std::vector<Ellipse>& predicted_coords) {
     std::vector<double> errors;
 
-    for (int i = 0; i < real_coords.size(); ++i) {
+    for (int i = 0; i < predicted_coords.size(); ++i) {
         errors.push_back(calculateError(real_coords[i], predicted_coords[i]));
     }
 
@@ -68,10 +65,6 @@ void calculateMetrics(const std::vector<Ellipse>& real_coords, const std::vector
     double max_error = *std::max_element(errors.begin(), errors.end());
     double min_error = *std::min_element(errors.begin(), errors.end());
 
-//    for (int i = 0; i < errors.size(); ++i) {
-//        std::cout << "error i = " << i << "  : " << errors[i] << std::endl;
-//    }
-
 //    showHistogram(errors, "Error Histogram", 12);
 
     std::cout << "Средняя ошибка (MAE): " << mae << std::endl;
@@ -81,7 +74,8 @@ void calculateMetrics(const std::vector<Ellipse>& real_coords, const std::vector
 }
 
 
-void testDetectEllipseExperiment(std::string path_ellipse_centers, std::string path_test_img, std::string type_img, int count_img) {
+void testDetectEllipseExperiment(const std::string& path_ellipse_centers, const std::string& path_test_img, const std::string& type_img, int count_img,
+                                 const std::string& path_to_data_for_cylinder, const std::string& path_to_mask_for_cylinder, const std::string& type_img_for_cylinder, const std::string& type_mask_for_cylinder) {
 
     std::vector<Ellipse> real_centers = readCentersFromFile(path_ellipse_centers);
     std::vector<Ellipse> predict_centers;
@@ -93,7 +87,7 @@ void testDetectEllipseExperiment(std::string path_ellipse_centers, std::string p
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(PATH, PATH, ".bmp", ".png", count_img);
+        cylinder = colorFilter.train(path_to_data_for_cylinder, path_to_mask_for_cylinder, type_img_for_cylinder, type_mask_for_cylinder, count_img);
         cylinder.save(PATH_CYLINDER);
     }
     FindBall findBall(colorFilter);
@@ -108,14 +102,14 @@ void testDetectEllipseExperiment(std::string path_ellipse_centers, std::string p
 //
 //        cv::Mat img_res = colorFilter.recognize(img_test);
 //
-//        auto end = std::chrono::high_resolution_clock::now();
-//        auto start = std::chrono::high_resolution_clock::now();
-//
 //        EdgeDetection edgeDetection;
 //        std::vector<Point> imagePoints = edgeDetection.find_points(img_res);
-//
-//        auto end = std::chrono::high_resolution_clock::now();
-//        auto start = std::chrono::high_resolution_clock::now();
+//        cv::Mat img_res_det = cv::Mat::zeros(cv::Size(img_res.cols, img_res.rows),CV_8UC1);
+//        img_res_det = edgeDetection.draw_points(img_res_det, imagePoints);
+//        cv::imshow("img_res", img_res);
+//        cv::waitKey(0);
+//        cv::imshow("img_res_det", img_res_det);
+//        cv::waitKey(0);
 //
 //        DetectEllipse detectEllipse;
 //        Ellipse ellipse = detectEllipse.detectEllipse(imagePoints);
@@ -146,6 +140,8 @@ void testDetectEllipseExperiment(std::string path_ellipse_centers, std::string p
 
 int main() {
 
+    std::string path_data = "../../Experiment1/Image_";
+
     std::string path_ellipse_centers_experiment_1 = "../../Experiment1/ellipse_centers.txt";
     std::string path_test_img_experiment_1 = "../../Experiment1/Image_";
     std::string type_img_experiment_1 = ".bmp";
@@ -166,32 +162,54 @@ int main() {
     std::string type_img_experiment_1_video_1 = ".tiff";
     int count_img_experiment_1_video_1 = 18;
 
+    std::string path_data_img_synthetic = "../../Experiment_synthetic_2/Image_";
+    std::string path_data_mask_synthetic = "../../Experiment_synthetic_2/mask/Image_";
+
     std::string path_ellipse_centers_experiment_synthetic = "../../Experiment_synthetic_2/ball_center.txt";
     std::string path_test_img_experiment_synthetic = "../../Experiment_synthetic_2/Image_";
     std::string type_img_experiment_synthetic = ".png";
     int count_img_experiment_synthetic = 660;
 
-    testDetectEllipseExperiment(path_ellipse_centers_experiment_1,
-                                path_test_img_experiment_1,
-                                type_img_experiment_1,
-                                count_img_experiment_1);
-    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3,
-                                path_test_img_experiment_1_video_3,
-                                type_img_experiment_1_video_3,
-                                count_img_experiment_1_video_3);
-    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3_1,
-                                path_test_img_experiment_1_video_3_1,
-                                type_img_experiment_1_video_3_1,
-                                count_img_experiment_1_video_3_1);
-    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_1,
-                                path_test_img_experiment_1_video_1,
-                                type_img_experiment_1_video_1,
-                                count_img_experiment_1_video_1);
-
+//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1,
+//                                path_test_img_experiment_1,
+//                                type_img_experiment_1,
+//                                count_img_experiment_1,
+//                                path_data,
+//                                path_data,
+//                                type_img_experiment_1,
+//                                ".png");
+//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3,
+//                                path_test_img_experiment_1_video_3,
+//                                type_img_experiment_1_video_3,
+//                                count_img_experiment_1_video_3,
+//                                path_data,
+//                                path_data,
+//                                type_img_experiment_1,
+//                                ".png");
+//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_3_1,
+//                                path_test_img_experiment_1_video_3_1,
+//                                type_img_experiment_1_video_3_1,
+//                                count_img_experiment_1_video_3_1,
+//                                path_data,
+//                                path_data,
+//                                type_img_experiment_1,
+//                                ".png");
+//    testDetectEllipseExperiment(path_ellipse_centers_experiment_1_video_1,
+//                                path_test_img_experiment_1_video_1,
+//                                type_img_experiment_1_video_1,
+//                                count_img_experiment_1_video_1,
+//                                path_data,
+//                                path_data,
+//                                type_img_experiment_1,
+//                                ".png");
     testDetectEllipseExperiment(path_ellipse_centers_experiment_synthetic,
                                 path_test_img_experiment_synthetic,
                                 type_img_experiment_synthetic,
-                                count_img_experiment_synthetic);
+                                count_img_experiment_synthetic,
+                                path_data_img_synthetic,
+                                path_data_mask_synthetic,
+                                type_img_experiment_synthetic,
+                                type_img_experiment_synthetic);
 
     return 0;
 }

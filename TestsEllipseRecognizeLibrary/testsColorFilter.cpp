@@ -3,12 +3,8 @@
 #include <cassert>
 #include <fstream>
 
-#include "colorFilter.h"
-
-//std::string PATH = "../../Experiment1/Image_";
-std::string PATH_CYLINDER = "../../cylinder.txt";
-std::string PATH = "../../Experiment_synthetic_2/Image_";
-std::string PATH_MASK = "../../Experiment_synthetic_2/mask/Image_";
+//#include "colorFilter.h"
+#include "testCommon.h"
 
 
 void convertGrayToWhite(cv::Mat& image) {
@@ -17,6 +13,9 @@ void convertGrayToWhite(cv::Mat& image) {
             uchar pixelValue = image.at<uchar>(y, x);
             if (pixelValue > 128) {
                 image.at<uchar>(y, x) = 255;
+            }
+            else {
+                image.at<uchar>(y, x) = 0;
             }
         }
     }
@@ -27,18 +26,17 @@ int hammingDistance(const cv::Mat& mask1, const cv::Mat& mask2) {
     if (mask1.size() != mask2.size() || mask1.type() != mask2.type()) {
         throw std::runtime_error("Masks must have the same size and type");
     }
-    int distance = cv::countNonZero(mask1 != mask2); // Количество отличающихся пикселей
+    int distance = cv::countNonZero(mask1 != mask2);
     return distance;
 }
 
 
-// Корреляция между изображениями.
 double compareMasksWithMatchTemplate(const cv::Mat& mask1, const cv::Mat& mask2) {
     if (mask1.size() != mask2.size() || mask1.type() != mask2.type()) {
         throw std::runtime_error("Masks must have the same size and type");
     }
     cv::Mat result;
-    cv::matchTemplate(mask1, mask2, result, cv::TM_CCOEFF_NORMED); // TM_CCOEFF_NORMED для нормализации
+    cv::matchTemplate(mask1, mask2, result, cv::TM_CCOEFF_NORMED);
 
     double minVal, maxVal;
     cv::minMaxLoc(result, &minVal, &maxVal);
@@ -59,7 +57,7 @@ double compareMasks(const cv::Mat& mask1, const cv::Mat& mask2) {
             }
         }
     }
-    return static_cast<double>(matchingPixels) / totalPixels; // Процент совпадений
+    return static_cast<double>(matchingPixels) / totalPixels;
 }
 
 
@@ -115,7 +113,8 @@ double calculateF1Score(const cv::Mat& mask1, const cv::Mat& mask2) {
 }
 
 
-void testColorFilter(std::string path_test_img, std::string path_mask_img, std::string type_img, int count_img) {
+void testColorFilter(std::string path_test_img, std::string path_mask_img, std::string type_img, int count_img,
+                     const std::string& path_to_data_for_cylinder, const std::string& path_to_mask_for_cylinder, const std::string& type_img_for_cylinder, const std::string& type_mask_for_cylinder) {
     ColorFilter colorFilter;
     Cylinder cylinder;
 
@@ -124,7 +123,7 @@ void testColorFilter(std::string path_test_img, std::string path_mask_img, std::
         colorFilter = ColorFilter(cylinder);
     }
     else {
-        cylinder = colorFilter.train(PATH, PATH_MASK, ".png", ".png", count_img);
+        cylinder = colorFilter.train(path_to_data_for_cylinder, path_to_mask_for_cylinder, type_img_for_cylinder, type_mask_for_cylinder, count_img);
         cylinder.save(PATH_CYLINDER);
     }
 
@@ -196,13 +195,24 @@ int main() {
     std::string path_test_img_experiment_synthetic_2 = "../../Experiment_synthetic_2/Image_";
     std::string path_mask_img_experiment_synthetic_2 = "../../Experiment_synthetic_2/mask/Image_";
     std::string type_img_experiment_synthetic_2 = ".png";
-    int count_img_experiment_synthetic_2 = 660;
+    int count_img_experiment_synthetic_2 = 3;
 
-//    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1);
-//    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3);
-//    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1);
-//    testColorFilter(path_test_img_experiment_synthetic, path_mask_img_experiment_synthetic, type_img_experiment_synthetic, count_img_experiment_synthetic);
-    testColorFilter(path_test_img_experiment_synthetic_2, path_mask_img_experiment_synthetic_2, type_img_experiment_synthetic_2, count_img_experiment_synthetic_2);
+
+    std::string path_data_experiment_1 = "../../Experiment1/Image_";
+    std::string path_data_img_synthetic = "../../Experiment_synthetic_2/Image_";
+    std::string path_data_mask_synthetic = "../../Experiment_synthetic_2/mask/Image_";
+
+//    testColorFilter(path_test_img_experiment_1, path_mask_img_experiment_1, type_img_experiment_1, count_img_experiment_1,
+//                    path_data_experiment_1, path_data_experiment_1, type_img_experiment_1, ".png");
+//    testColorFilter(path_test_img_experiment_1_video_3, path_mask_img_experiment_1_video_3, type_img_experiment_1_video_3, count_img_experiment_1_video_3,
+//                    path_data_experiment_1, path_data_experiment_1, type_img_experiment_1, ".png");
+//    testColorFilter(path_test_img_experiment_1_video_1, path_mask_img_experiment_1_video_1, type_img_experiment_1_video_1, count_img_experiment_1_video_1,
+//                    path_data_experiment_1, path_data_experiment_1, type_img_experiment_1, ".png");
+
+    testColorFilter(path_test_img_experiment_synthetic, path_mask_img_experiment_synthetic, type_img_experiment_synthetic, count_img_experiment_synthetic,
+                    path_data_img_synthetic, path_data_mask_synthetic, type_img_experiment_synthetic, type_img_experiment_synthetic);
+    testColorFilter(path_test_img_experiment_synthetic_2, path_mask_img_experiment_synthetic_2, type_img_experiment_synthetic_2, count_img_experiment_synthetic_2,
+                    path_data_img_synthetic, path_data_mask_synthetic, type_img_experiment_synthetic, type_img_experiment_synthetic);
 
     return 0;
 }

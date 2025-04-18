@@ -11,8 +11,6 @@ class VideoRecognize {
     cv::VideoCapture cap;
     cv::VideoWriter video;
     FindBall findBall;
-
-//    cv::Mat read_next_part_of_video();
 public:
     VideoRecognize(ColorFilter& colorFilter, cv::VideoCapture cap) : cap(cap), colorFilter(colorFilter), findBall(FindBall(colorFilter)) {}
     ~VideoRecognize() { cap.release(); }

@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 17)
 set( vkrm_source
         src/main.cpp
         src/colorFilter.cpp
-        src/contous.cpp
         src/edgeDetection.cpp
         src/edgeDetection.cpp
         src/detectEllipse.cpp
@@ -14,7 +13,6 @@ set( vkrm_source
         src/findBall.cpp
 
         inc/colorFilter.h
-        inc/contous.h
         inc/edgeDetection.h
         inc/edgeDetection.h
         inc/detectEllipse.h
